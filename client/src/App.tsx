@@ -11,6 +11,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { Navigation } from "./components/Navigation";
 import { AnimatePresence, motion } from "framer-motion";
+import { BackgroundParticles } from "./components/BackgroundParticles";
 
 const pageVariants = {
   initial: { opacity: 0, y: 12 },
@@ -76,11 +77,14 @@ function App() {
         defaultTheme="light"
       >
         <TooltipProvider>
-          <Toaster />
-          <div className="min-h-screen pb-20">
-            <Router />
+          <BackgroundParticles />
+          <div className="relative z-10">
+            <Toaster />
+            <div className="min-h-screen pb-20">
+              <Router />
+            </div>
+            <Navigation />
           </div>
-          <Navigation />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

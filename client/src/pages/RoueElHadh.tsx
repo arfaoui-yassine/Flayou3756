@@ -46,7 +46,7 @@ export default function RoueElHadh() {
   };
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen">
       <motion.div
         initial="initial"
         animate="animate"

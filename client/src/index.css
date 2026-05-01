@@ -143,7 +143,7 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-transparent text-foreground;
     font-family: 'Inter', 'Cairo', sans-serif;
     direction: rtl;
     -webkit-font-smoothing: antialiased;

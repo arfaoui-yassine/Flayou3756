@@ -20,7 +20,7 @@ export default function Home() {
   const [, setLocation] = useLocation();
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen">
       <motion.div
         variants={stagger}
         initial="initial"

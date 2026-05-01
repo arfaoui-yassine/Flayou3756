@@ -161,7 +161,7 @@ export default function QuizPage() {
   const progress = (questionsAnswered / 10) * 100;
 
   return (
-    <div className="min-h-screen bg-black flex flex-col">
+    <div className="min-h-screen flex flex-col">
       {/* Progress — Thin line at very top */}
       <div className="h-[2px] bg-[#1A1A1A] w-full">
         <motion.div

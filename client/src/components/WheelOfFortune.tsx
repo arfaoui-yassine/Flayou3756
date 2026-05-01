@@ -1,7 +1,8 @@
-import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import { ar } from "@/locales/ar";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Trophy, Star } from "lucide-react";
+import confetti from "canvas-confetti";
 
 export interface WheelPrize {
   id: string;
@@ -28,25 +29,46 @@ export function WheelOfFortune({
   const [isSpinning, setIsSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [lastWinner, setLastWinner] = useState<WheelPrize | null>(null);
+  const controls = useAnimation();
 
   const handleSpin = async () => {
     if (userPoints < spinCost || isSpinning || isLoading) return;
 
     setIsSpinning(true);
     setLastWinner(null);
-    const spins = 8 + Math.random() * 5; // More spins for excitement
+    
+    // Epic 6-second spin duration
+    const spinDuration = 6;
+    const spins = 10 + Math.random() * 5; 
     const randomIndex = Math.floor(Math.random() * prizes.length);
     
-    // Calculate final rotation (aligned with pointer at top)
     const prizeAngle = 360 / prizes.length;
     const targetAngle = (prizes.length - randomIndex) * prizeAngle - (prizeAngle / 2);
-    const newRotation = rotation + spins * 360 + targetAngle - (rotation % 360);
+    const totalRotation = rotation + spins * 360 + targetAngle - (rotation % 360);
 
-    setRotation(newRotation);
+    setRotation(totalRotation);
 
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    // Trigger spin animation
+    await controls.start({
+      rotate: totalRotation,
+      transition: {
+        duration: spinDuration,
+        ease: [0.15, 0, 0.15, 1], // Super smooth start, dramatic deceleration
+      }
+    });
 
+    // Landing sequence
     setLastWinner(prizes[randomIndex]);
+    
+    // Celebration!
+    if (prizes[randomIndex].points > 0) {
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ["#ED1C24", "#FFFFFF", "#FFCC00"]
+      });
+    }
 
     try {
       await onSpin(randomIndex);
@@ -57,59 +79,75 @@ export function WheelOfFortune({
     }
   };
 
-  // Vibrant palette inspired by the image but adapted for dark theme
   const vibrantColors = [
-    "#FF3B30", // Red
-    "#FF9500", // Orange
-    "#FFCC00", // Yellow
-    "#4CD964", // Green
-    "#5AC8FA", // Sky Blue
-    "#007AFF", // Blue
-    "#5856D6", // Indigo
-    "#FF2D55", // Pink
+    "#FF1E1E", // Vibrant Red
+    "#FF9100", // Vibrant Orange
+    "#FFD000", // Gold
+    "#00E676", // Neon Green
+    "#00B0FF", // Bright Blue
+    "#651FFF", // Deep Purple
+    "#F50057", // Bright Pink
+    "#00E5FF", // Cyan
   ];
 
   return (
     <div className="w-full max-w-md mx-auto">
-      {/* Wheel Container with Glow Effect */}
-      <div className="relative w-80 h-80 mx-auto mb-12 group">
+      {/* 
+          ═══════════════════════════════════════════════
+          THE EPIC WHEEL CONTAINER
+          ═══════════════════════════════════════════════ 
+      */}
+      <div className="relative w-80 h-80 mx-auto mb-16 group">
         
-        {/* Animated Outer Glow */}
-        <div className="absolute inset-[-20px] rounded-full bg-[#ED1C24]/10 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+        {/* Pulsing Aura Background */}
+        <div className={`absolute inset-[-40px] rounded-full blur-[100px] transition-all duration-1000 ${
+          isSpinning ? "bg-[#ED1C24]/30 scale-110 opacity-100" : "bg-[#ED1C24]/5 opacity-50"
+        }`} />
         
-        {/* Outer Ring with "Lights" */}
-        <div className="absolute inset-[-10px] rounded-full border-[3px] border-[#222] flex items-center justify-center">
-          {[...Array(24)].map((_, i) => (
-            <div
+        {/* Outer Decorative Ring with "Chasing Lights" */}
+        <div className="absolute inset-[-15px] rounded-full border-[2px] border-white/10 flex items-center justify-center">
+          {[...Array(36)].map((_, i) => (
+            <motion.div
               key={i}
-              className={`absolute w-1.5 h-1.5 rounded-full ${
-                isSpinning ? "animate-pulse" : ""
-              }`}
+              animate={isSpinning ? {
+                opacity: [0.3, 1, 0.3],
+                scale: [1, 1.5, 1],
+              } : {}}
+              transition={{
+                duration: 0.5,
+                repeat: Infinity,
+                delay: i * 0.05,
+              }}
+              className="absolute w-1.5 h-1.5 rounded-full"
               style={{
-                transform: `rotate(${i * 15}deg) translateY(-148px)`,
-                backgroundColor: i % 2 === 0 ? "#ED1C24" : "#FFF",
-                boxShadow: i % 2 === 0 ? "0 0 8px #ED1C24" : "0 0 8px #FFF",
-                animationDelay: `${i * 0.1}s`
+                transform: `rotate(${i * 10}deg) translateY(-158px)`,
+                backgroundColor: i % 3 === 0 ? "#ED1C24" : "#FFF",
+                boxShadow: i % 3 === 0 ? "0 0 10px #ED1C24" : "0 0 5px #FFF",
               }}
             />
           ))}
         </div>
 
-        {/* Pointer — refined orange/red design from image */}
-        <div className="absolute top-[-15px] left-1/2 transform -translate-x-1/2 z-30 filter drop-shadow-lg">
-          <div className="w-8 h-10 bg-[#ED1C24] clip-path-pointer rounded-b-sm shadow-xl flex items-center justify-center pt-1">
-            <div className="w-1.5 h-4 bg-white/30 rounded-full" />
-          </div>
+        {/* Refined Pointer Design */}
+        <div className="absolute top-[-25px] left-1/2 transform -translate-x-1/2 z-50">
+          <motion.div 
+            animate={isSpinning ? {
+              rotate: [0, -15, 0],
+            } : {}}
+            transition={{
+              duration: 0.1,
+              repeat: Infinity,
+            }}
+            className="w-10 h-14 bg-gradient-to-b from-[#ED1C24] to-[#990000] clip-path-pointer shadow-2xl flex items-center justify-center pt-2"
+          >
+            <Star className="w-4 h-4 text-white fill-white animate-pulse" />
+          </motion.div>
         </div>
 
-        {/* The Wheel */}
+        {/* THE WHEEL OBJECT */}
         <motion.div
-          animate={{ rotate: rotation }}
-          transition={{
-            duration: 5,
-            ease: [0.2, 0.8, 0.2, 1], // Custom bounce-back feel at the end
-          }}
-          className="relative w-full h-full rounded-full border-[6px] border-[#111] overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.5)] bg-[#050505]"
+          animate={controls}
+          className="relative w-full h-full rounded-full border-[8px] border-[#0A0A0A] overflow-hidden shadow-[0_0_60px_rgba(0,0,0,0.8)] bg-[#000]"
           style={{
             background: `conic-gradient(${prizes
               .map(
@@ -119,10 +157,10 @@ export function WheelOfFortune({
               .join(", ")})`,
           }}
         >
-          {/* Inner Shadow for depth */}
-          <div className="absolute inset-0 rounded-full shadow-[inset_0_0_60px_rgba(0,0,0,0.4)] z-10 pointer-events-none" />
+          {/* Beveled edge effect */}
+          <div className="absolute inset-0 rounded-full border-[10px] border-white/5 z-10 pointer-events-none" />
 
-          {/* Prize Content */}
+          {/* Prize Sections */}
           {prizes.map((prize, index) => {
             const angle = (index * 360) / prizes.length + 180 / prizes.length;
             return (
@@ -134,13 +172,13 @@ export function WheelOfFortune({
                 <div
                   className="absolute flex flex-col items-center"
                   style={{
-                    transform: `translateY(-100px) rotate(180deg)`,
+                    transform: `translateY(-105px) rotate(180deg)`,
                   }}
                 >
-                  <span className="text-white font-black text-xs tracking-tighter text-center px-2 drop-shadow-md">
+                  <span className="text-white font-black text-sm tracking-tighter text-center drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
                     {prize.label.split(" ")[0]}
                     <br />
-                    <span className="opacity-80 font-bold text-[9px] uppercase">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-white/90">
                       {prize.label.split(" ").slice(1).join(" ")}
                     </span>
                   </span>
@@ -149,91 +187,115 @@ export function WheelOfFortune({
             );
           })}
 
-          {/* Division Lines */}
+          {/* Separation Lines */}
           <div className="absolute inset-0 z-0">
             {prizes.map((_, i) => (
               <div
                 key={i}
-                className="absolute top-1/2 left-1/2 w-[1px] h-1/2 bg-black/20 origin-top"
+                className="absolute top-1/2 left-1/2 w-[2px] h-1/2 bg-black/30 origin-top"
                 style={{ transform: `rotate(${(i * 360) / prizes.length}deg)` }}
               />
             ))}
           </div>
         </motion.div>
 
-        {/* Center Hub — Metallic/Glassy look */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-gradient-to-br from-[#333] to-[#000] border-2 border-[#444] z-40 shadow-2xl flex items-center justify-center">
-          <div className="w-3 h-3 rounded-full bg-[#ED1C24] shadow-[0_0_10px_#ED1C24]" />
+        {/* Premium Center Hub */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-gradient-to-br from-[#222] via-[#000] to-[#222] border-[3px] border-white/10 z-40 shadow-2xl flex items-center justify-center overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-tr from-[#ED1C24]/20 to-transparent animate-spin-slow" />
+          <Trophy className="w-6 h-6 text-[#ED1C24] relative z-10 drop-shadow-[0_0_10px_rgba(237,28,36,0.5)]" />
         </div>
       </div>
 
-      {/* Action Area */}
-      <div className="space-y-4">
+      {/* 
+          ═══════════════════════════════════════════════
+          ACTION AREA
+          ═══════════════════════════════════════════════ 
+      */}
+      <div className="space-y-6">
         <button
           onClick={handleSpin}
           disabled={isSpinning || isLoading || userPoints < spinCost}
-          className="group relative w-full overflow-hidden bg-[#ED1C24] hover:bg-[#D91920] disabled:bg-[#1A1A1A] disabled:text-[#555] text-white font-black py-5 px-8 transition-all text-xl uppercase tracking-widest shadow-2xl"
+          className="group relative w-full overflow-hidden bg-white hover:bg-white/90 disabled:bg-[#111] disabled:text-[#333] text-black font-black py-6 px-8 transition-all text-2xl uppercase tracking-[0.2em] shadow-[0_0_30px_rgba(255,255,255,0.1)] hover:shadow-[0_0_40px_rgba(255,255,255,0.2)]"
         >
-          {/* Button Shine Effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+          {/* Animated Shine */}
+          <motion.div 
+            animate={{ x: ["-100%", "200%"] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-black/5 to-transparent skew-x-[-20deg]" 
+          />
           
-          <div className="relative flex items-center justify-center gap-3">
+          <div className="relative flex items-center justify-center gap-4">
             {isSpinning ? (
-              <span className="animate-pulse">جاري الدوران...</span>
+              <span className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-black rounded-full animate-bounce" />
+                <div className="w-2 h-2 bg-black rounded-full animate-bounce [animation-delay:0.2s]" />
+                <div className="w-2 h-2 bg-black rounded-full animate-bounce [animation-delay:0.4s]" />
+              </span>
             ) : (
               <>
-                <Sparkles className="w-5 h-5" />
+                <Sparkles className="w-6 h-6 text-[#ED1C24]" />
                 {ar.wheel.spin}
               </>
             )}
           </div>
         </button>
 
-        {/* Status Messages */}
-        <AnimatePresence mode="wait">
-          {userPoints < spinCost ? (
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="text-[#ED1C24] text-xs font-bold text-center uppercase tracking-widest"
-            >
-              {ar.errors.insufficientPoints}
-            </motion.p>
-          ) : (
-            !isSpinning && !lastWinner && (
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-[#555] text-xs text-center uppercase tracking-widest"
-              >
-                جرب حظك بـ {spinCost} نقطة فقط
-              </motion.p>
-            )
-          )}
-        </AnimatePresence>
+        {/* User Stats Display */}
+        <div className="flex justify-between items-center px-4">
+          <div className="text-left">
+            <p className="text-[#444] text-[10px] uppercase tracking-widest mb-1">Cost to Spin</p>
+            <p className="text-white font-bold">{spinCost} pts</p>
+          </div>
+          <div className="text-right">
+            <p className="text-[#444] text-[10px] uppercase tracking-widest mb-1">Your Balance</p>
+            <p className={`font-bold ${userPoints < spinCost ? "text-[#ED1C24]" : "text-white"}`}>
+              {userPoints} pts
+            </p>
+          </div>
+        </div>
 
-        {/* Winner Announcement — High Impact */}
+        {/* WINNER ANNOUNCEMENT OVERLAY */}
         <AnimatePresence>
           {lastWinner && !isSpinning && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              initial={{ opacity: 0, scale: 0.8, y: 30 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 1.1 }}
-              className="mt-10 p-1 bg-[#ED1C24]"
+              className="fixed inset-0 z-[100] flex items-center justify-center px-6 pointer-events-none"
             >
-              <div className="bg-black py-8 px-10 text-center border-2 border-transparent">
-                <p className="label-red mb-4 !text-white animate-bounce">
+              <div className="relative w-full max-w-sm overflow-hidden border-2 border-[#ED1C24] bg-black p-12 text-center shadow-[0_0_100px_rgba(237,28,36,0.4)] pointer-events-auto">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#ED1C24] to-transparent" />
+                
+                <motion.div
+                  initial={{ rotate: -10, scale: 0 }}
+                  animate={{ rotate: 0, scale: 1 }}
+                  transition={{ type: "spring", damping: 12 }}
+                  className="mb-6 flex justify-center"
+                >
+                  <div className="relative">
+                    <Trophy className="w-16 h-16 text-[#FFD000] drop-shadow-[0_0_20px_rgba(255,208,0,0.5)]" />
+                    <motion.div 
+                      animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                      className="absolute inset-0 bg-[#FFD000]/20 blur-xl rounded-full" 
+                    />
+                  </div>
+                </motion.div>
+
+                <p className="label-red !text-white mb-2 animate-pulse tracking-[0.3em]">
                   {ar.wheel.youWon}
                 </p>
-                <h2 className="text-4xl font-black text-white mb-2 tracking-tighter">
+                
+                <h2 className="text-5xl font-black text-white mb-8 tracking-tighter leading-none">
                   {lastWinner.label}
                 </h2>
-                {lastWinner.points > 0 && (
-                  <div className="inline-block px-4 py-1 bg-[#ED1C24] text-white text-xs font-bold uppercase tracking-widest">
-                    +{lastWinner.points} {ar.wheel.points}
-                  </div>
-                )}
+                
+                <button
+                  onClick={() => setLastWinner(null)}
+                  className="w-full border border-white/20 hover:border-white/40 text-white text-xs font-bold py-4 uppercase tracking-widest transition-all"
+                >
+                  {ar.close}
+                </button>
               </div>
             </motion.div>
           )}
@@ -243,6 +305,13 @@ export function WheelOfFortune({
       <style dangerouslySetInnerHTML={{ __html: `
         .clip-path-pointer {
           clip-path: polygon(0% 0%, 100% 0%, 100% 70%, 50% 100%, 0% 70%);
+        }
+        @keyframes spin-slow {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .animate-spin-slow {
+          animation: spin-slow 10s linear infinite;
         }
       `}} />
     </div>
