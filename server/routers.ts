@@ -4,10 +4,105 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { nanoid } from "nanoid";
-import { getRandomMockQuestion, getAllMockRewards, getRandomWheelPrize, wheelPrizes } from "./mocks";
+import { getRandomMockQuestion, getAllMockRewards, getRandomWheelPrize, wheelPrizes, getQuestionById } from "./mocks";
 import { calculateTrustScoreFromBehavior, calculatePointsEarned, getTrustLevel } from "./services/scoringService";
 import { inMemoryStore } from "./inMemoryStore";
 import type { BehaviorData } from "./services/scoringService";
+import { ENV } from "./_core/env";
+
+type WorkflowSnapshot = {
+  user_id: string;
+  session_id: string;
+  level: number;
+  xp: number;
+  completed_missions: string[];
+  recent_topics: string[];
+  skip_rate: number;
+  avg_time_on_question_sec: number;
+  engagement_score: number;
+  preferred_difficulty: "easy" | "medium" | "hard";
+};
+
+const clamp = (value: number, min: number, max: number) =>
+  Math.max(min, Math.min(max, value));
+
+const buildWorkflowSnapshot = (params: {
+  sessionId: string;
+  trustScore: number;
+  points: number;
+  userId?: string | null;
+}): WorkflowSnapshot => {
+  const answers = inMemoryStore.getAnswers(params.sessionId);
+  const totalAnswers = answers.length;
+  const skippedCount = answers.filter(answer => answer.wasSkipped).length;
+  const avgResponseTimeMs =
+    totalAnswers > 0
+      ? answers.reduce((sum, answer) => sum + answer.responseTime, 0) / totalAnswers
+      : 0;
+
+  const recentTopics = answers
+    .slice(-5)
+    .map(answer => getQuestionById(answer.questionId)?.type ?? "unknown");
+
+  const difficultyCounts: Record<"easy" | "medium" | "hard", number> = {
+    easy: 0,
+    medium: 0,
+    hard: 0,
+  };
+
+  answers.forEach(answer => {
+    const difficulty = getQuestionById(answer.questionId)?.difficulty;
+    if (difficulty) {
+      difficultyCounts[difficulty] += 1;
+    }
+  });
+
+  const preferredDifficulty = (Object.entries(difficultyCounts)
+    .sort((a, b) => b[1] - a[1])[0]?.[0] ?? "easy") as "easy" | "medium" | "hard";
+
+  const skipRate = totalAnswers > 0 ? skippedCount / totalAnswers : 0;
+  const avgTimeOnQuestionSec = avgResponseTimeMs / 1000;
+  const completionRate = totalAnswers > 0 ? (totalAnswers - skippedCount) / totalAnswers : 0;
+  const engagementScore = clamp(Math.round(params.trustScore), 0, 100);
+  const level = clamp(Math.floor(params.trustScore / 20), 0, 5);
+
+  return {
+    user_id: params.userId ?? `guest:${params.sessionId}`,
+    session_id: params.sessionId,
+    level,
+    xp: params.points,
+    completed_missions: totalAnswers >= 10 ? ["quiz"] : [],
+    recent_topics: recentTopics,
+    skip_rate: Number(skipRate.toFixed(4)),
+    avg_time_on_question_sec: Number(avgTimeOnQuestionSec.toFixed(2)),
+    engagement_score: engagementScore,
+    preferred_difficulty: preferredDifficulty,
+  };
+};
+
+const sendWorkflowSnapshot = async (snapshot: WorkflowSnapshot) => {
+  if (!ENV.n8nWorkflowUrl) {
+    console.warn("[Workflow] N8N_WORKFLOW_URL not configured");
+    return;
+  }
+
+  try {
+    const response = await fetch(ENV.n8nWorkflowUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(snapshot),
+    });
+
+    if (!response.ok) {
+      const body = await response.text().catch(() => "");
+      console.warn(`[Workflow] N8N responded ${response.status}: ${body}`);
+    }
+  } catch (error) {
+    console.warn("[Workflow] N8N request failed", error);
+  }
+};
 
 export const appRouter = router({
   system: systemRouter,
@@ -79,7 +174,7 @@ export const appRouter = router({
           wasSkipped: z.boolean().default(false),
         })
       )
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         const session = inMemoryStore.getSession(input.sessionId);
         if (!session) {
           throw new Error("Session not found");
@@ -124,12 +219,39 @@ export const appRouter = router({
           questionsAnswered: answers.length,
         });
 
+        const snapshot = buildWorkflowSnapshot({
+          sessionId: input.sessionId,
+          trustScore: newTrustScore,
+          points: newPoints,
+          userId: ctx.user?.openId ?? null,
+        });
+
+        void sendWorkflowSnapshot(snapshot);
+
         return {
           pointsEarned,
           totalPoints: newPoints,
           newTrustScore,
           questionsAnswered: answers.length,
         };
+      }),
+  }),
+
+  analytics: router({
+    snapshot: publicProcedure
+      .input(z.object({ sessionId: z.string() }))
+      .query(async ({ input, ctx }) => {
+        const session = inMemoryStore.getSession(input.sessionId);
+        if (!session) {
+          throw new Error("Session not found");
+        }
+
+        return buildWorkflowSnapshot({
+          sessionId: input.sessionId,
+          trustScore: session.trustScore,
+          points: session.points,
+          userId: ctx.user?.openId ?? null,
+        });
       }),
   }),
 
