@@ -1,10 +1,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { ar } from "@/locales/ar";
-import { useLocation } from "wouter";
-import { ArrowRight, ShoppingBag, Check, AlertCircle } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { toast } from "sonner";
 
 interface Reward {
@@ -12,75 +9,76 @@ interface Reward {
   name: string;
   description: string;
   points: number;
-  icon: React.ReactNode;
-  color: string;
+  icon: string;
 }
 
 const mockRewards: Reward[] = [
   {
     id: "jumia-100",
     name: "بطاقة جوميا",
-    description: "رصيد 100 دينار على جوميا",
+    description: "رصيد 100 دينار",
     points: 200,
     icon: "🛍️",
-    color: "from-orange-600 to-orange-700",
   },
   {
     id: "glovo-50",
     name: "بطاقة جلوفو",
-    description: "رصيد 50 دينار على جلوفو",
+    description: "رصيد 50 دينار",
     points: 150,
     icon: "🍔",
-    color: "from-green-600 to-green-700",
   },
   {
     id: "carrefour-75",
     name: "بطاقة كارفور",
-    description: "رصيد 75 دينار على كارفور",
+    description: "رصيد 75 دينار",
     points: 180,
     icon: "🏪",
-    color: "from-blue-600 to-blue-700",
   },
   {
     id: "ooredoo-30",
     name: "رصيد أوريدو",
-    description: "رصيد 30 دينار للهاتف",
+    description: "رصيد 30 دينار",
     points: 100,
     icon: "📱",
-    color: "from-red-600 to-red-700",
   },
   {
     id: "netflix-month",
     name: "نتفليكس شهر",
-    description: "اشتراك نتفليكس لشهر كامل",
+    description: "اشتراك شهر كامل",
     points: 250,
     icon: "🎬",
-    color: "from-red-700 to-red-800",
   },
   {
     id: "spotify-3months",
     name: "سبوتيفاي 3 أشهر",
-    description: "اشتراك سبوتيفاي لثلاثة أشهر",
+    description: "اشتراك ثلاثة أشهر",
     points: 300,
     icon: "🎵",
-    color: "from-green-700 to-green-800",
   },
 ];
 
+const stagger = {
+  animate: { transition: { staggerChildren: 0.06 } },
+};
+
+const fadeUp = {
+  initial: { opacity: 0, y: 16 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.4 } },
+};
+
 export default function ElMarchi() {
-  const [, setLocation] = useLocation();
   const [userPoints, setUserPoints] = useState(250);
   const [selectedReward, setSelectedReward] = useState<Reward | null>(null);
   const [purchaseState, setPurchaseState] = useState<{
     rewardId: string | null;
-    status: "idle" | "loading" | "success" | "error";
+    status: "idle" | "loading" | "success";
   }>({ rewardId: null, status: "idle" });
 
   const handlePurchaseClick = (reward: Reward) => {
     if (userPoints >= reward.points) {
       setSelectedReward(reward);
     } else {
-      toast.error("نقاط غير كافية!");
+      toast.error("نقاط غير كافية");
     }
   };
 
@@ -92,13 +90,13 @@ export default function ElMarchi() {
     setTimeout(() => {
       setUserPoints(prev => prev - selectedReward.points);
       setPurchaseState({ rewardId: selectedReward.id, status: "success" });
-      toast.success(`تم شراء ${selectedReward.name} بنجاح!`);
+      toast.success(`تم شراء ${selectedReward.name} بنجاح`);
 
       setTimeout(() => {
         setSelectedReward(null);
         setPurchaseState({ rewardId: null, status: "idle" });
-      }, 2000);
-    }, 1500);
+      }, 1500);
+    }, 1200);
   };
 
   const handleCancel = () => {
@@ -107,157 +105,109 @@ export default function ElMarchi() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black p-4">
-      {/* Header */}
+    <div className="min-h-screen bg-black">
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-4xl mx-auto mb-8"
+        variants={stagger}
+        initial="initial"
+        animate="animate"
+        className="max-w-3xl mx-auto px-5 pt-12 pb-8"
       >
-        <div className="flex items-center justify-between mb-6">
-          <Button
-            onClick={() => setLocation("/")}
-            variant="ghost"
-            className="text-red-500 hover:text-red-600"
-          >
-            <ArrowRight className="mr-2" size={20} />
-            {ar.back}
-          </Button>
-          <h1 className="text-4xl font-bold text-white">El Marchi</h1>
-          <div className="w-20" />
-        </div>
-
-        {/* Points Display */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="bg-gradient-to-r from-red-600 to-red-700 rounded-3xl p-6 text-white shadow-xl"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm opacity-90">{ar.marchi.subtitle}</p>
-              <p className="text-4xl font-bold mt-2">{userPoints} نقطة</p>
-            </div>
-            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
-              <ShoppingBag size={32} className="text-white" />
-            </div>
+        {/* Header */}
+        <motion.div variants={fadeUp} className="mb-12">
+          <p className="label-red mb-3">Marketplace</p>
+          <h1 className="text-5xl font-bold text-white mb-2">السوق</h1>
+          <div className="flex items-baseline gap-3 mt-4">
+            <span className="text-[#888] text-sm">رصيدك:</span>
+            <span className="text-white text-2xl font-bold">{userPoints}</span>
+            <span className="text-[#555] text-sm">نقطة</span>
           </div>
+        </motion.div>
+
+        <motion.div variants={fadeUp} className="section-divider mb-10" />
+
+        {/* Rewards Grid */}
+        <motion.div
+          variants={stagger}
+          className="grid grid-cols-2 sm:grid-cols-3 gap-4"
+        >
+          {mockRewards.map(reward => {
+            const canAfford = userPoints >= reward.points;
+            const isPurchased = purchaseState.status === "success" && purchaseState.rewardId === reward.id;
+
+            return (
+              <motion.button
+                key={reward.id}
+                variants={fadeUp}
+                onClick={() => !isPurchased && handlePurchaseClick(reward)}
+                disabled={isPurchased}
+                className={`text-center py-8 px-4 border transition-colors ${
+                  isPurchased
+                    ? "border-green-800 bg-green-900/10"
+                    : canAfford
+                    ? "border-[#222] hover:border-[#ED1C24]/50"
+                    : "border-[#151515] opacity-40"
+                }`}
+              >
+                <div className="text-4xl mb-4">{reward.icon}</div>
+                <h3 className="text-white font-semibold text-sm mb-1">{reward.name}</h3>
+                <p className="text-[#666] text-xs mb-4">{reward.description}</p>
+                <div className="text-[#ED1C24] font-bold text-sm">
+                  {isPurchased ? (
+                    <span className="text-green-500 flex items-center justify-center gap-1">
+                      <Check size={14} />
+                      تم
+                    </span>
+                  ) : (
+                    `${reward.points} نقطة`
+                  )}
+                </div>
+              </motion.button>
+            );
+          })}
         </motion.div>
       </motion.div>
 
-      {/* Rewards Grid */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="max-w-4xl mx-auto"
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          {mockRewards.map((reward, index) => {
-            const canAfford = userPoints >= reward.points;
-
-            return (
-              <motion.div
-                key={reward.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <Card className={`bg-gradient-to-br from-gray-900 to-black border rounded-2xl p-6 shadow-lg transition-all ${
-                  canAfford
-                    ? "border-white/10 hover:border-red-600/50"
-                    : "border-white/5 opacity-60"
-                }`}>
-                  <div className="text-center">
-                    {/* Icon */}
-                    <div className="text-5xl mb-4" style={{ filter: 'grayscale(0%)' }}>{reward.icon}</div>
-
-                    {/* Name & Description */}
-                    <h3 className="text-white font-bold text-lg mb-2">{reward.name}</h3>
-                    <p className="text-gray-400 text-sm mb-6">{reward.description}</p>
-
-                    {/* Points Cost */}
-                    <div className="bg-red-600/20 border border-red-600/30 rounded-lg p-3 mb-6">
-                      <p className="text-red-500 font-bold text-lg">{reward.points} نقطة</p>
-                    </div>
-
-                    {/* Buy Button */}
-                    {purchaseState.status === "success" && purchaseState.rewardId === reward.id ? (
-                      <Button
-                        disabled
-                        className="w-full bg-green-600 text-white font-bold rounded-lg flex items-center justify-center gap-2"
-                      >
-                        <Check size={20} />
-                        تم الشراء
-                      </Button>
-                    ) : canAfford ? (
-                      <Button
-                        onClick={() => handlePurchaseClick(reward)}
-                        className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold rounded-lg"
-                      >
-                        {ar.marchi.buy}
-                      </Button>
-                    ) : (
-                      <Button
-                        disabled
-                        className="w-full bg-gray-700 text-gray-400 font-bold rounded-lg flex items-center justify-center gap-2"
-                      >
-                        <AlertCircle size={20} />
-                        نقاط غير كافية
-                      </Button>
-                    )}
-                  </div>
-                </Card>
-              </motion.div>
-            );
-          })}
-        </div>
-      </motion.div>
-
-      {/* Purchase Confirmation Modal */}
-      {selectedReward && (
+      {/* Purchase Confirmation Overlay */}
+      {selectedReward && purchaseState.status !== "success" && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+          className="fixed inset-0 bg-black/80 flex items-center justify-center p-5 z-50"
         >
           <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-gradient-to-br from-gray-900 to-black border border-white/10 rounded-3xl p-8 max-w-sm w-full shadow-2xl"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full max-w-sm border border-[#222] bg-black p-8"
           >
             <div className="text-center">
-              <div className="text-6xl mb-6">{selectedReward.icon}</div>
-
-              <h2 className="text-2xl font-bold text-white mb-4">
+              <div className="text-5xl mb-6">{selectedReward.icon}</div>
+              <h2 className="text-xl font-bold text-white mb-2">
                 تأكيد الشراء
               </h2>
+              <p className="text-[#888] text-sm mb-6">{selectedReward.name}</p>
 
-              <div className="bg-white/5 border border-white/10 rounded-lg p-4 mb-6">
-                <p className="text-white font-bold mb-2">{selectedReward.name}</p>
-                <p className="text-red-500 font-bold text-lg">{selectedReward.points} نقطة</p>
+              <div className="border border-[#222] py-4 px-6 mb-8">
+                <span className="text-[#ED1C24] font-bold text-2xl">
+                  {selectedReward.points}
+                </span>
+                <span className="text-[#666] text-sm mr-2">نقطة</span>
               </div>
 
-              <p className="text-gray-400 mb-8">
-                هل أنت متأكد من رغبتك في شراء {selectedReward.name}؟
-              </p>
-
-              <div className="flex gap-4">
-                <Button
+              <div className="flex gap-3">
+                <button
                   onClick={handleCancel}
                   disabled={purchaseState.status === "loading"}
-                  variant="outline"
-                  className="flex-1 rounded-lg border-2 border-white/20 text-white hover:bg-white/5"
+                  className="flex-1 border border-[#333] text-[#888] hover:text-white hover:border-[#555] py-3 transition-colors text-sm font-medium"
                 >
                   {ar.cancel}
-                </Button>
-                <Button
+                </button>
+                <button
                   onClick={handleConfirmPurchase}
                   disabled={purchaseState.status === "loading"}
-                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg"
+                  className="flex-1 bg-[#ED1C24] hover:bg-[#D91920] text-white py-3 transition-colors text-sm font-semibold"
                 >
-                  {purchaseState.status === "loading" ? "جاري..." : ar.marchi.buy}
-                </Button>
+                  {purchaseState.status === "loading" ? "جاري..." : "تأكيد"}
+                </button>
               </div>
             </div>
           </motion.div>

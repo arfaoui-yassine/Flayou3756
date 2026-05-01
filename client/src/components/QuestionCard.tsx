@@ -1,7 +1,5 @@
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { motion } from "framer-motion";
 import { Star } from "lucide-react";
 import { ar } from "@/locales/ar";
 
@@ -26,10 +24,8 @@ export function QuestionCard({ question, onAnswer, onSkip, isLoading = false }: 
   const [rating, setRating] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [openEndedAnswer, setOpenEndedAnswer] = useState("");
-  const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(null);
 
   const handleSwipe = (direction: "left" | "right") => {
-    setSwipeDirection(direction);
     const responseTime = Date.now() - startTime;
     const selectedOpt = question.options?.[direction === "left" ? 0 : 1];
     if (selectedOpt) {
@@ -58,150 +54,135 @@ export function QuestionCard({ question, onAnswer, onSkip, isLoading = false }: 
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.3 }}
-      className="w-full h-full flex items-center justify-center p-4"
+      exit={{ opacity: 0, y: -16 }}
+      transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
+      className="w-full max-w-md mx-auto"
     >
-      <Card className="w-full max-w-md bg-gradient-to-br from-gray-900 to-black border border-red-600/30 shadow-xl rounded-3xl p-8">
-        {/* Question Header */}
-        <div className="mb-8">
-          <p className="text-sm font-semibold text-red-500 mb-2">{ar.mission.questionNumber} 1/10</p>
-          <h2 className="text-2xl font-bold text-white text-right leading-relaxed">{question.text}</h2>
+      {/* Question Text — Big, Bold */}
+      <div className="mb-12 text-center">
+        <h2 className="text-3xl sm:text-4xl font-bold text-white leading-snug">
+          {question.text}
+        </h2>
+      </div>
+
+      {/* Swipe Questions */}
+      {question.type === "swipe" && question.options && (
+        <div className="grid grid-cols-2 gap-3">
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => handleSwipe("left")}
+            disabled={isLoading}
+            className="h-28 border border-[#333] hover:border-[#ED1C24] transition-colors flex items-center justify-center"
+          >
+            <span className="text-white font-semibold text-lg">
+              {question.options[0].labelAr}
+            </span>
+          </motion.button>
+
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => handleSwipe("right")}
+            disabled={isLoading}
+            className="h-28 border border-[#333] hover:border-[#ED1C24] transition-colors flex items-center justify-center"
+          >
+            <span className="text-white font-semibold text-lg">
+              {question.options[1].labelAr}
+            </span>
+          </motion.button>
         </div>
+      )}
 
-        {/* Swipe Questions */}
-        {question.type === "swipe" && question.options && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+      {/* Rating Questions */}
+      {question.type === "rating" && (
+        <div className="space-y-8">
+          <div className="flex justify-center gap-3">
+            {[1, 2, 3, 4, 5].map(star => (
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => handleSwipe("left")}
+                key={star}
+                whileTap={{ scale: 0.85 }}
+                onClick={() => setRating(star)}
                 disabled={isLoading}
-                className="relative h-32 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow"
+                className="p-1"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-red-400 to-pink-500 flex items-center justify-center">
-                  <span className="text-white font-bold text-center px-2">{question.options[0].labelAr}</span>
-                </div>
-                <motion.div
-                  className="absolute inset-0 bg-black/20"
-                  whileHover={{ backgroundColor: "rgba(0,0,0,0.3)" }}
+                <Star
+                  size={40}
+                  className={`transition-colors ${
+                    star <= rating
+                      ? "fill-[#ED1C24] text-[#ED1C24]"
+                      : "text-[#333] hover:text-[#555]"
+                  }`}
                 />
-              </motion.button>
-
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => handleSwipe("right")}
-                disabled={isLoading}
-                className="relative h-32 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center">
-                  <span className="text-white font-bold text-center px-2">{question.options[1].labelAr}</span>
-                </div>
-                <motion.div
-                  className="absolute inset-0 bg-black/20"
-                  whileHover={{ backgroundColor: "rgba(0,0,0,0.3)" }}
-                />
-              </motion.button>
-            </div>
-          </div>
-        )}
-
-        {/* Rating Questions */}
-        {question.type === "rating" && (
-          <div className="space-y-6">
-            <div className="flex justify-center gap-2">
-              {[1, 2, 3, 4, 5].map(star => (
-                <motion.button
-                  key={star}
-                  whileHover={{ scale: 1.2 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setRating(star)}
-                  disabled={isLoading}
-                >
-                  <Star
-                    size={48}
-                    className={`transition-colors ${
-                      star <= rating
-                        ? "fill-yellow-400 text-yellow-400"
-                        : "text-gray-300 hover:text-yellow-300"
-                    }`}
-                  />
-                </motion.button>
-              ))}
-            </div>
-            <Button
-              onClick={handleRatingSubmit}
-              disabled={rating === 0 || isLoading}
-              className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold py-3 rounded-xl"
-            >
-              {ar.mission.submit}
-            </Button>
-          </div>
-        )}
-
-        {/* Choice Questions */}
-        {question.type === "choice" && question.options && (
-          <div className="space-y-3">
-            {question.options.map(option => (
-              <motion.button
-                key={option.id}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setSelectedOption(option.id)}
-                className={`w-full p-4 rounded-xl font-semibold text-right transition-all ${
-                  selectedOption === option.id
-                    ? "bg-indigo-600 text-white shadow-lg"
-                    : "bg-white text-gray-900 border-2 border-gray-200 hover:border-indigo-400"
-                }`}
-              >
-                {option.labelAr}
               </motion.button>
             ))}
-            <Button
-              onClick={handleChoiceSubmit}
-              disabled={!selectedOption || isLoading}
-              className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-3 rounded-xl mt-4"
-            >
-              {ar.mission.submit}
-            </Button>
           </div>
-        )}
+          <button
+            onClick={handleRatingSubmit}
+            disabled={rating === 0 || isLoading}
+            className="w-full bg-[#ED1C24] hover:bg-[#D91920] disabled:bg-[#333] disabled:text-[#666] text-white font-semibold py-4 transition-colors"
+          >
+            {ar.mission.submit}
+          </button>
+        </div>
+      )}
 
-        {/* Open-ended Questions */}
-        {question.type === "open_ended" && (
-          <div className="space-y-4">
-            <textarea
-              value={openEndedAnswer}
-              onChange={e => setOpenEndedAnswer(e.target.value)}
-              placeholder={ar.mission.write}
-              disabled={isLoading}
-              className="w-full p-4 rounded-xl border-2 border-gray-200 focus:border-indigo-600 focus:outline-none resize-none text-right"
-              rows={4}
-            />
-            <Button
-              onClick={handleOpenEndedSubmit}
-              disabled={!openEndedAnswer.trim() || isLoading}
-              className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold py-3 rounded-xl"
+      {/* Choice Questions */}
+      {question.type === "choice" && question.options && (
+        <div className="space-y-3">
+          {question.options.map(option => (
+            <motion.button
+              key={option.id}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setSelectedOption(option.id)}
+              className={`w-full py-4 px-6 text-right font-medium transition-all border ${
+                selectedOption === option.id
+                  ? "border-[#ED1C24] text-white bg-[#ED1C24]/10"
+                  : "border-[#333] text-[#ccc] hover:border-[#555]"
+              }`}
             >
-              {ar.mission.submit}
-            </Button>
-          </div>
-        )}
+              {option.labelAr}
+            </motion.button>
+          ))}
+          <button
+            onClick={handleChoiceSubmit}
+            disabled={!selectedOption || isLoading}
+            className="w-full bg-[#ED1C24] hover:bg-[#D91920] disabled:bg-[#333] disabled:text-[#666] text-white font-semibold py-4 mt-4 transition-colors"
+          >
+            {ar.mission.submit}
+          </button>
+        </div>
+      )}
 
-        {/* Skip Button */}
-        <Button
-          onClick={onSkip}
-          disabled={isLoading}
-          variant="ghost"
-          className="w-full mt-4 text-gray-600 hover:text-gray-900"
-        >
-          {ar.mission.skip}
-        </Button>
-      </Card>
+      {/* Open-ended Questions */}
+      {question.type === "open_ended" && (
+        <div className="space-y-4">
+          <textarea
+            value={openEndedAnswer}
+            onChange={e => setOpenEndedAnswer(e.target.value)}
+            placeholder={ar.mission.write}
+            disabled={isLoading}
+            className="w-full p-5 bg-transparent border border-[#333] focus:border-[#ED1C24] text-white placeholder:text-[#555] resize-none outline-none transition-colors text-right"
+            rows={4}
+          />
+          <button
+            onClick={handleOpenEndedSubmit}
+            disabled={!openEndedAnswer.trim() || isLoading}
+            className="w-full bg-[#ED1C24] hover:bg-[#D91920] disabled:bg-[#333] disabled:text-[#666] text-white font-semibold py-4 transition-colors"
+          >
+            {ar.mission.submit}
+          </button>
+        </div>
+      )}
+
+      {/* Skip */}
+      <button
+        onClick={onSkip}
+        disabled={isLoading}
+        className="w-full mt-6 text-[#555] hover:text-[#888] text-sm font-medium transition-colors"
+      >
+        {ar.mission.skip} ←
+      </button>
     </motion.div>
   );
 }

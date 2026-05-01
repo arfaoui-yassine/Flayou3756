@@ -1,6 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import url('https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&family=Cairo:wght@200;300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
 
 @custom-variant dark (&:is(.dark *));
 
@@ -43,75 +43,99 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* ═══════════════════════════════════════════════
+   3sg.tn-inspired: Pure black, white type, red accent
+   ═══════════════════════════════════════════════ */
+
 :root {
-  --primary: #EF4444;
-  --primary-foreground: #FAFAFA;
-  --sidebar-primary: #DC2626;
-  --sidebar-primary-foreground: #FAFAFA;
-  --chart-1: #EF4444;
-  --chart-2: #DC2626;
-  --chart-3: #B91C1C;
-  --chart-4: #991B1B;
-  --chart-5: #7F1D1D;
-  --radius: 0.65rem;
-  --background: #0F0F0F;
-  --foreground: #FAFAFA;
-  --card: #1A1A1A;
-  --card-foreground: #FAFAFA;
-  --popover: #1A1A1A;
-  --popover-foreground: #FAFAFA;
-  --secondary: #262626;
+  --radius: 0.5rem;
+
+  /* Core */
+  --background: #000000;
+  --foreground: #FFFFFF;
+
+  /* Cards — slightly lifted from pure black */
+  --card: #0A0A0A;
+  --card-foreground: #FFFFFF;
+
+  /* Popover */
+  --popover: #0A0A0A;
+  --popover-foreground: #FFFFFF;
+
+  /* Primary — Red accent */
+  --primary: #ED1C24;
+  --primary-foreground: #FFFFFF;
+
+  /* Secondary — Dark gray */
+  --secondary: #1A1A1A;
   --secondary-foreground: #E5E5E5;
-  --muted: #404040;
-  --muted-foreground: #A3A3A3;
-  --accent: #EF4444;
-  --accent-foreground: #0F0F0F;
-  --destructive: #EF4444;
-  --destructive-foreground: #FAFAFA;
-  --border: #262626;
-  --input: #262626;
-  --ring: #EF4444;
-  --sidebar: #0F0F0F;
-  --sidebar-foreground: #FAFAFA;
-  --sidebar-accent: #EF4444;
-  --sidebar-accent-foreground: #0F0F0F;
-  --sidebar-border: #262626;
-  --sidebar-ring: #EF4444;
+
+  /* Muted */
+  --muted: #1A1A1A;
+  --muted-foreground: #888888;
+
+  /* Accent */
+  --accent: #ED1C24;
+  --accent-foreground: #FFFFFF;
+
+  /* Destructive */
+  --destructive: #ED1C24;
+  --destructive-foreground: #FFFFFF;
+
+  /* Borders & inputs */
+  --border: #222222;
+  --input: #1A1A1A;
+  --ring: #ED1C24;
+
+  /* Charts */
+  --chart-1: #ED1C24;
+  --chart-2: #FF4444;
+  --chart-3: #CC1111;
+  --chart-4: #991111;
+  --chart-5: #661111;
+
+  /* Sidebar */
+  --sidebar: #000000;
+  --sidebar-foreground: #FFFFFF;
+  --sidebar-primary: #ED1C24;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #ED1C24;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #222222;
+  --sidebar-ring: #ED1C24;
 }
 
 .dark {
-  --primary: #EF4444;
-  --primary-foreground: #FAFAFA;
-  --sidebar-primary: #DC2626;
-  --sidebar-primary-foreground: #FAFAFA;
-  --background: #0F0F0F;
-  --foreground: #FAFAFA;
-  --card: #1A1A1A;
-  --card-foreground: #FAFAFA;
-  --popover: #1A1A1A;
-  --popover-foreground: #FAFAFA;
-  --secondary: #262626;
+  --background: #000000;
+  --foreground: #FFFFFF;
+  --card: #0A0A0A;
+  --card-foreground: #FFFFFF;
+  --popover: #0A0A0A;
+  --popover-foreground: #FFFFFF;
+  --primary: #ED1C24;
+  --primary-foreground: #FFFFFF;
+  --secondary: #1A1A1A;
   --secondary-foreground: #E5E5E5;
-  --muted: #404040;
-  --muted-foreground: #A3A3A3;
-  --accent: #EF4444;
-  --accent-foreground: #0F0F0F;
-  --destructive: #EF4444;
-  --destructive-foreground: #FAFAFA;
-  --border: #262626;
-  --input: #262626;
-  --ring: #EF4444;
-  --chart-1: #EF4444;
-  --chart-2: #DC2626;
-  --chart-3: #B91C1C;
-  --chart-4: #991B1B;
-  --chart-5: #7F1D1D;
-  --sidebar: #0F0F0F;
-  --sidebar-foreground: #FAFAFA;
-  --sidebar-accent: #EF4444;
-  --sidebar-accent-foreground: #FAFAFA;
-  --sidebar-border: #262626;
-  --sidebar-ring: #EF4444;
+  --muted: #1A1A1A;
+  --muted-foreground: #888888;
+  --accent: #ED1C24;
+  --accent-foreground: #FFFFFF;
+  --destructive: #ED1C24;
+  --destructive-foreground: #FFFFFF;
+  --border: #222222;
+  --input: #1A1A1A;
+  --ring: #ED1C24;
+  --chart-1: #ED1C24;
+  --chart-2: #FF4444;
+  --chart-3: #CC1111;
+  --chart-4: #991111;
+  --chart-5: #661111;
+  --sidebar: #000000;
+  --sidebar-foreground: #FFFFFF;
+  --sidebar-accent: #ED1C24;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #222222;
+  --sidebar-ring: #ED1C24;
 }
 
 @layer base {
@@ -120,11 +144,14 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Cairo', 'Almarai', sans-serif;
+    font-family: 'Inter', 'Cairo', sans-serif;
     direction: rtl;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   html {
     direction: rtl;
+    scroll-behavior: smooth;
   }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
@@ -140,25 +167,12 @@
 }
 
 @layer components {
-  /**
-   * Custom container utility that centers content and adds responsive padding.
-   *
-   * This overrides Tailwind's default container behavior to:
-   * - Auto-center content (mx-auto)
-   * - Add responsive horizontal padding
-   * - Set max-width for large screens
-   *
-   * Usage: <div className="container">...</div>
-   *
-   * For custom widths, use max-w-* utilities directly:
-   * <div className="max-w-6xl mx-auto px-4">...</div>
-   */
   .container {
     width: 100%;
     margin-left: auto;
     margin-right: auto;
-    padding-left: 1rem; /* 16px - mobile padding */
-    padding-right: 1rem;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
   }
 
   .flex {
@@ -168,47 +182,65 @@
 
   @media (min-width: 640px) {
     .container {
-      padding-left: 1.5rem; /* 24px - tablet padding */
-      padding-right: 1.5rem;
+      padding-left: 2rem;
+      padding-right: 2rem;
     }
   }
 
   @media (min-width: 1024px) {
     .container {
-      padding-left: 2rem; /* 32px - desktop padding */
-      padding-right: 2rem;
-      max-width: 1280px; /* Standard content width */
+      padding-left: 3rem;
+      padding-right: 3rem;
+      max-width: 1280px;
     }
+  }
+
+  /* Editorial text — outline stroke effect like 3sg.tn */
+  .text-outline {
+    -webkit-text-stroke: 1.5px #FFFFFF;
+    color: transparent;
+  }
+  .text-outline-red {
+    -webkit-text-stroke: 1.5px #ED1C24;
+    color: transparent;
+  }
+
+  /* Red label — small uppercase tag */
+  .label-red {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #ED1C24;
+  }
+
+  /* Section divider */
+  .section-divider {
+    border-top: 1px solid #222222;
+    width: 100%;
   }
 }
 
-/* Custom scrollbar */
+/* Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 4px;
+  height: 4px;
 }
-
 ::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.1);
+  background: transparent;
 }
-
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 4px;
+  background: #333333;
+  border-radius: 2px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.5);
+  background: #555555;
 }
 
 /* Smooth animations */
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes slideUp {
@@ -222,25 +254,12 @@
   }
 }
 
-@keyframes pulse-glow {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
-  }
-  50% {
-    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
-  }
-}
-
 .animate-fade-in {
-  animation: fadeIn 0.3s ease-in;
+  animation: fadeIn 0.4s ease-out;
 }
 
 .animate-slide-up {
-  animation: slideUp 0.3s ease-out;
-}
-
-.animate-pulse-glow {
-  animation: pulse-glow 2s infinite;
+  animation: slideUp 0.4s ease-out;
 }
 
 /* RTL adjustments */
@@ -252,23 +271,4 @@
 [dir="rtl"] input,
 [dir="rtl"] textarea {
   text-align: right;
-}
-
-/* Gradient backgrounds */
-.bg-gradient-primary {
-  @apply bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600;
-}
-
-.bg-gradient-secondary {
-  @apply bg-gradient-to-br from-blue-50 to-indigo-50;
-}
-
-/* Glass morphism */
-.glass {
-  @apply bg-white/10 backdrop-blur-md border border-white/20;
-}
-
-/* Smooth transitions */
-.transition-smooth {
-  @apply transition-all duration-300 ease-in-out;
 }

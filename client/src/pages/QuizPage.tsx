@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { QuestionCard } from "@/components/QuestionCard";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
 import { ar } from "@/locales/ar";
 
@@ -56,7 +54,6 @@ export default function QuizPage() {
 
       try {
         setIsLoading(true);
-        // Simulate API call with mock data
         const mockQuestions: Question[] = [
           {
             id: "q1",
@@ -124,23 +121,19 @@ export default function QuizPage() {
         wasSkipped: false,
       });
 
-      // Show reward animation
       setLastReward({
         points: result.pointsEarned,
         trustScore: result.newTrustScore,
       });
       setShowReward(true);
-
-      // Update state
       setPoints(result.totalPoints);
       setTrustScore(result.newTrustScore);
       setQuestionsAnswered(questionsAnswered + 1);
 
-      // Load next question after delay
       setTimeout(() => {
         setCurrentQuestion(null);
         setShowReward(false);
-      }, 2000);
+      }, 1500);
     } catch (error) {
       console.error("Failed to submit answer:", error);
     } finally {
@@ -157,8 +150,6 @@ export default function QuizPage() {
         sessionId,
         eventType: "question_skipped",
       });
-
-      // Load next question
       setCurrentQuestion(null);
     } catch (error) {
       console.error("Failed to track skip:", error);
@@ -167,132 +158,95 @@ export default function QuizPage() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black p-4">
-      {/* Header */}
-      <div className="max-w-md mx-auto mb-8">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex justify-between items-center mb-4"
-        >
-          <div className="bg-white/20 backdrop-blur-md rounded-full px-4 py-2 text-white font-semibold">
-            {ar.session.points}: {points}
-          </div>
-          <div className="bg-white/20 backdrop-blur-md rounded-full px-4 py-2 text-white font-semibold">
-            {ar.session.trustScore}: {Math.round(trustScore)}
-          </div>
-        </motion.div>
+  const progress = (questionsAnswered / 10) * 100;
 
-        {/* Progress Bar */}
-        <div className="bg-white/20 backdrop-blur-md rounded-full h-2 overflow-hidden">
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${(questionsAnswered / 10) * 100}%` }}
-            transition={{ duration: 0.5 }}
-            className="h-full bg-gradient-to-r from-red-500 to-red-600"
-          />
-        </div>
-        <p className="text-white text-sm mt-2 text-center">
-          {questionsAnswered} / 10 {ar.mission.questionNumber}
-        </p>
+  return (
+    <div className="min-h-screen bg-black flex flex-col">
+      {/* Progress — Thin line at very top */}
+      <div className="h-[2px] bg-[#1A1A1A] w-full">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${progress}%` }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          className="h-full bg-[#ED1C24]"
+        />
       </div>
 
-      {/* Question Card */}
-      <AnimatePresence mode="wait">
-        {currentQuestion && (
-          <div key={currentQuestion.id}>
-            <QuestionCard
-              question={currentQuestion}
-              onAnswer={handleAnswer}
-              onSkip={handleSkip}
-              isLoading={isLoading}
-            />
+      {/* Question counter */}
+      <div className="flex justify-between items-center px-5 py-4 max-w-md mx-auto w-full">
+        <span className="text-[#555] text-xs font-medium tracking-wide">
+          {questionsAnswered}/10
+        </span>
+        <span className="text-[#555] text-xs font-medium">
+          {points} نقطة
+        </span>
+      </div>
+
+      {/* Main content — centered */}
+      <div className="flex-1 flex items-center justify-center px-5 py-8">
+        <AnimatePresence mode="wait">
+          {currentQuestion && !showReward && (
+            <div key={currentQuestion.id}>
+              <QuestionCard
+                question={currentQuestion}
+                onAnswer={handleAnswer}
+                onSkip={handleSkip}
+                isLoading={isLoading}
+              />
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Reward — Simple text fade */}
+        <AnimatePresence>
+          {showReward && lastReward && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              className="text-center"
+            >
+              <p className="text-[#ED1C24] text-5xl font-bold mb-3">
+                +{lastReward.points}
+              </p>
+              <p className="text-[#888] text-sm">{ar.mission.thankYou}</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Loading State */}
+        {isLoading && !currentQuestion && !showReward && (
+          <div className="text-center">
+            <div className="w-8 h-8 border-2 border-[#333] border-t-[#ED1C24] rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-[#555] text-sm">{ar.loading}</p>
           </div>
         )}
-      </AnimatePresence>
 
-      {/* Reward Animation */}
-      <AnimatePresence>
-        {showReward && lastReward && (
+        {/* Completion */}
+        {questionsAnswered >= 10 && !currentQuestion && !showReward && (
           <motion.div
-            initial={{ opacity: 0, scale: 0 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0 }}
-            className="fixed inset-0 flex items-center justify-center pointer-events-none"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center max-w-sm mx-auto"
           >
-            <motion.div
-              animate={{ y: [0, -50, 0] }}
-              transition={{ duration: 1, repeat: Infinity }}
-              className="text-6xl"
-            >
-              ✨
-            </motion.div>
-            <div className="absolute text-center">
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-4xl font-bold text-white mb-4"
-              >
-                +{lastReward.points} {ar.mission.pointsEarned}
-              </motion.p>
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
-                className="text-xl text-white"
-              >
-                {ar.mission.thankYou}
-              </motion.p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <p className="label-red mb-4">Mission Complete</p>
+            <h2 className="text-4xl font-bold text-white mb-4">مبروك!</h2>
+            <p className="text-[#888] mb-8">أكملت جميع الأسئلة بنجاح</p>
 
-      {/* Loading State */}
-      {isLoading && !currentQuestion && (
-        <div className="max-w-md mx-auto">
-          <Card className="bg-white/20 backdrop-blur-md border-0 p-8 text-center">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full mx-auto"
-            />
-            <p className="text-white mt-4">{ar.loading}</p>
-          </Card>
-        </div>
-      )}
-
-      {/* Completion State */}
-      {questionsAnswered >= 10 && !currentQuestion && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="max-w-md mx-auto"
-        >
-          <Card className="bg-white rounded-3xl p-8 text-center shadow-2xl">
-            <motion.p
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{ duration: 1, repeat: Infinity }}
-              className="text-6xl mb-4"
-            >
-              🎉
-            </motion.p>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">مبروك!</h2>
-            <p className="text-gray-600 mb-6">أكملت جميع الأسئلة بنجاح!</p>
-            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-6 text-white mb-6">
-              <p className="text-sm opacity-90">إجمالي النقاط</p>
-              <p className="text-4xl font-bold">{points}</p>
+            <div className="border border-[#222] py-6 px-8 mb-8">
+              <p className="text-[#555] text-xs uppercase tracking-widest mb-2">إجمالي النقاط</p>
+              <p className="text-white text-5xl font-bold">{points}</p>
             </div>
-            <Button
+
+            <button
               onClick={() => (window.location.href = "/")}
-              className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold py-3 rounded-xl"
+              className="w-full bg-[#ED1C24] hover:bg-[#D91920] text-white font-semibold py-4 transition-colors"
             >
               {ar.buttons.goHome}
-            </Button>
-          </Card>
-        </motion.div>
-      )}
+            </button>
+          </motion.div>
+        )}
+      </div>
     </div>
   );
 }
