@@ -17,6 +17,7 @@ interface QuestionCardProps {
   onAnswer: (answer: string, responseTime: number) => void;
   onSkip: () => void;
   isLoading?: boolean;
+  isAISuggested?: boolean;
 }
 
 export function QuestionCard({ question, onAnswer, onSkip, isLoading = false }: QuestionCardProps) {
