@@ -16,7 +16,7 @@ export const ar = {
 
   // Home / Onboarding
   home: {
-    title: "تحياتي! 👋",
+    title: "تحياتي!",
     subtitle: "أهلا و سهلا في Chnouwa Rayek?",
     description: "أعطينا رايك و احصل على نقاط و هدايا!",
     startButton: "نبدا الآن",
@@ -43,7 +43,7 @@ export const ar = {
     submit: "أرسل",
     skip: "تخطي",
     pointsEarned: "نقاط كسبت",
-    thankYou: "شكرا على جوابك! 🎉",
+    thankYou: "شكرا على جوابك!",
   },
 
   // Boutique (El Marchi)
@@ -55,7 +55,7 @@ export const ar = {
     buy: "اشتري",
     insufficientPoints: "ما عندك نقاط كافية",
     confirmPurchase: "تأكيد الشراء",
-    purchaseSuccess: "تم الشراء بنجاح! ✨",
+    purchaseSuccess: "تم الشراء بنجاح!",
     yourReward: "هديتك",
   },
 
@@ -70,7 +70,7 @@ export const ar = {
     freeSpins: "دورات مجانية",
     mysteryBox: "صندوق غامض",
     luckyDraw: "سحب الحظ",
-    congratulations: "مبروك! 🎊",
+    congratulations: "مبروك!",
     spinAgain: "دور مرة أخرى",
   },
 
@@ -120,12 +120,12 @@ export const ar = {
 
   // Messages
   messages: {
-    welcomeBack: "أهلا و سهلا بك مرة أخرى! 👋",
+    welcomeBack: "أهلا و سهلا بك مرة أخرى!",
     keepGoing: "استمر في الإجابة و اكسب نقاط!",
     almostThere: "أنت قريب من المستوى التالي!",
-    newLevel: "مبروك! وصلت لمستوى جديد! 🎉",
-    trustIncreased: "درجة ثقتك زادت! ⬆️",
-    trustDecreased: "درجة ثقتك انخفضت ⬇️",
+    newLevel: "مبروك! وصلت لمستوى جديد!",
+    trustIncreased: "درجة ثقتك زادت!",
+    trustDecreased: "درجة ثقتك انخفضت",
   },
 
   // Errors

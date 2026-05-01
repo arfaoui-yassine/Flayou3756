@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { ar } from "@/locales/ar";
-import { Check, X } from "lucide-react";
+import { Check, X, ShoppingCart, Utensils, Store, Smartphone, Film, Music } from "lucide-react";
 import { toast } from "sonner";
 
 interface Reward {
@@ -9,7 +9,7 @@ interface Reward {
   name: string;
   description: string;
   points: number;
-  icon: string;
+  icon: React.ElementType;
 }
 
 const mockRewards: Reward[] = [
@@ -18,42 +18,42 @@ const mockRewards: Reward[] = [
     name: "بطاقة جوميا",
     description: "رصيد 100 دينار",
     points: 200,
-    icon: "🛍️",
+    icon: ShoppingCart,
   },
   {
     id: "glovo-50",
     name: "بطاقة جلوفو",
     description: "رصيد 50 دينار",
     points: 150,
-    icon: "🍔",
+    icon: Utensils,
   },
   {
     id: "carrefour-75",
     name: "بطاقة كارفور",
     description: "رصيد 75 دينار",
     points: 180,
-    icon: "🏪",
+    icon: Store,
   },
   {
     id: "ooredoo-30",
     name: "رصيد أوريدو",
     description: "رصيد 30 دينار",
     points: 100,
-    icon: "📱",
+    icon: Smartphone,
   },
   {
     id: "netflix-month",
     name: "نتفليكس شهر",
     description: "اشتراك شهر كامل",
     points: 250,
-    icon: "🎬",
+    icon: Film,
   },
   {
     id: "spotify-3months",
     name: "سبوتيفاي 3 أشهر",
     description: "اشتراك ثلاثة أشهر",
     points: 300,
-    icon: "🎵",
+    icon: Music,
   },
 ];
 
@@ -140,7 +140,7 @@ export default function ElMarchi() {
                 variants={fadeUp}
                 onClick={() => !isPurchased && handlePurchaseClick(reward)}
                 disabled={isPurchased}
-                className={`text-center py-8 px-4 border transition-colors ${
+                className={`text-center py-8 px-4 border transition-colors flex flex-col items-center justify-center ${
                   isPurchased
                     ? "border-green-800 bg-green-900/10"
                     : canAfford
@@ -148,7 +148,7 @@ export default function ElMarchi() {
                     : "border-[#151515] opacity-40"
                 }`}
               >
-                <div className="text-4xl mb-4">{reward.icon}</div>
+                <reward.icon size={32} className="text-white/40 mb-4" />
                 <h3 className="text-white font-semibold text-sm mb-1">{reward.name}</h3>
                 <p className="text-[#666] text-xs mb-4">{reward.description}</p>
                 <div className="text-[#ED1C24] font-bold text-sm">
@@ -179,8 +179,8 @@ export default function ElMarchi() {
             animate={{ opacity: 1, y: 0 }}
             className="w-full max-w-sm border border-[#222] bg-black p-8"
           >
-            <div className="text-center">
-              <div className="text-5xl mb-6">{selectedReward.icon}</div>
+            <div className="text-center flex flex-col items-center">
+              <selectedReward.icon size={48} className="text-[#ED1C24] mb-6" />
               <h2 className="text-xl font-bold text-white mb-2">
                 تأكيد الشراء
               </h2>
