@@ -10,6 +10,7 @@ import { inMemoryStore } from "./inMemoryStore";
 import type { SuggestedQuestion } from "./inMemoryStore";
 import type { BehaviorData } from "./services/scoringService";
 import { ENV } from "./_core/env";
+import { triggerAnswerAnalysis } from "./services/answerAnalyzer";
 
 type WorkflowSnapshot = {
   user_id: string;
@@ -433,6 +434,26 @@ export const appRouter = router({
 
         void sendWorkflowSnapshot(snapshot);
 
+        // Trigger async AI analysis after 5+ answers
+        if (answers.length >= 5) {
+          const answersForAnalysis = answers.map(a => {
+            const question = getQuestionById(a.questionId);
+            return {
+              questionId: a.questionId,
+              questionText: question?.textAr ?? a.questionId,
+              questionType: question?.type ?? "unknown",
+              answer: a.answer,
+              responseTime: a.responseTime,
+              wasSkipped: a.wasSkipped,
+            };
+          });
+          triggerAnswerAnalysis(input.sessionId, answersForAnalysis, {
+            trustScore: newTrustScore,
+            points: newPoints,
+            questionsAnswered: answers.length,
+          });
+        }
+
         return {
           pointsEarned,
           totalPoints: newPoints,
@@ -457,6 +478,29 @@ export const appRouter = router({
           points: session.points,
           userId: ctx.user?.openId ?? null,
         });
+      }),
+
+    // AI Performance Report
+    report: publicProcedure
+      .input(z.object({ sessionId: z.string() }))
+      .query(async ({ input }) => {
+        const session = inMemoryStore.getSession(input.sessionId);
+        if (!session) {
+          return {
+            status: "none" as const,
+            message: "ابدأ بالإجابة على الأسئلة باش تحصل على تقرير AI.",
+          };
+        }
+
+        const report = inMemoryStore.getAIReport(input.sessionId);
+        if (!report) {
+          return {
+            status: "none" as const,
+            message: "لازم تجاوب على 5 أسئلة على الأقل باش تحصل على تقرير.",
+          };
+        }
+
+        return report;
       }),
   }),
 
