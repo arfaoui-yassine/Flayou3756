@@ -220,60 +220,33 @@ export function WheelOfFortune({
           </div>
         </motion.div>
 
-        {/* Premium Center Hub */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-gradient-to-br from-[#222] via-[#000] to-[#222] border-[3px] border-white/10 z-40 shadow-2xl flex items-center justify-center overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-tr from-[#ED1C24]/20 to-transparent animate-spin-slow" />
-          <Trophy className="w-6 h-6 text-[#ED1C24] relative z-10 drop-shadow-[0_0_10px_rgba(237,28,36,0.5)]" />
-        </div>
-      </div>
-
-      {/* 
-          ═══════════════════════════════════════════════
-          ACTION AREA
-          ═══════════════════════════════════════════════ 
-      */}
-      <div className="space-y-6">
+        {/* Center Hub — CLICK TO SPIN */}
         <button
           onClick={handleSpin}
           disabled={isSpinning || isLoading || userPoints < spinCost}
-          className="group relative w-full overflow-hidden bg-white hover:bg-white/90 disabled:bg-[#111] disabled:text-[#333] text-black font-black py-6 px-8 transition-all text-2xl uppercase tracking-[0.2em] shadow-[0_0_30px_rgba(255,255,255,0.1)] hover:shadow-[0_0_40px_rgba(255,255,255,0.2)]"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-full bg-gradient-to-br from-[#222] via-[#000] to-[#222] border-[3px] border-white/10 z-40 shadow-2xl flex items-center justify-center overflow-hidden cursor-pointer hover:scale-110 transition-transform disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {/* Animated Shine */}
-          <motion.div 
-            animate={{ x: ["-100%", "200%"] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-black/5 to-transparent skew-x-[-20deg]" 
-          />
-          
-          <div className="relative flex items-center justify-center gap-4">
-            {isSpinning ? (
-              <span className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-black rounded-full animate-bounce" />
-                <div className="w-2 h-2 bg-black rounded-full animate-bounce [animation-delay:0.2s]" />
-                <div className="w-2 h-2 bg-black rounded-full animate-bounce [animation-delay:0.4s]" />
-              </span>
-            ) : (
-              <>
-                <Sparkles className="w-6 h-6 text-[#ED1C24]" />
-                {ar.wheel.spin}
-              </>
-            )}
-          </div>
+          <div className="absolute inset-0 bg-gradient-to-tr from-[#ED1C24]/20 to-transparent animate-spin-slow" />
+          {isSpinning ? (
+            <div className="w-5 h-5 border-2 border-white/30 border-t-[#ED1C24] rounded-full animate-spin relative z-10" />
+          ) : (
+            <div className="relative z-10 flex flex-col items-center">
+              <Trophy className="w-5 h-5 text-[#ED1C24] drop-shadow-[0_0_10px_rgba(237,28,36,0.5)]" />
+              <span className="text-white text-[8px] font-black uppercase tracking-wider mt-0.5">دوّر</span>
+            </div>
+          )}
+          {/* Pulse ring when idle */}
+          {!isSpinning && (
+            <motion.div
+              animate={{ scale: [1, 1.3, 1], opacity: [0.5, 0, 0.5] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="absolute inset-0 rounded-full border-2 border-[#ED1C24]/30"
+            />
+          )}
         </button>
+      </div>
 
-        {/* User Stats Display */}
-        <div className="flex justify-between items-center px-4">
-          <div className="text-left">
-            <p className="text-[#444] text-[10px] uppercase tracking-widest mb-1">Cost to Spin</p>
-            <p className="text-white font-bold">{spinCost} pts</p>
-          </div>
-          <div className="text-right">
-            <p className="text-[#444] text-[10px] uppercase tracking-widest mb-1">Your Balance</p>
-            <p className={`font-bold ${userPoints < spinCost ? "text-[#ED1C24]" : "text-white"}`}>
-              {userPoints} pts
-            </p>
-          </div>
-        </div>
+      <div>
 
         {/* WINNER ANNOUNCEMENT OVERLAY */}
         <AnimatePresence>
