@@ -1,0 +1,5 @@
+export declare const Q_NEW_TICKETS = "\nSELECT id, date_heure, montant_total, type_paiement\nFROM Ticket\nWHERE date_heure > @since\nORDER BY date_heure ASC;\n";
+export declare const Q_TICKET_LINES = "\nSELECT lt.id_ticket, lt.id_article, a.libelle, a.categorie,\n       lt.quantite, lt.prix_unitaire\nFROM LigneTicket lt\nJOIN Article a ON a.id = lt.id_article\nWHERE lt.id_ticket IN ({IDS});\n";
+export declare const Q_STOCK_LEVELS = "\nSELECT a.id, a.libelle, a.categorie,\n       COALESCE(s.stock_actuel, 0) as stock_actuel,\n       COALESCE(a.stock_minimum, 5) as stock_minimum\nFROM Article a\nLEFT JOIN Stock s ON s.id_article = a.id\nWHERE a.actif = 1;\n";
+export declare const Q_TICKETS_BETWEEN = "\nSELECT id, date_heure, montant_total, type_paiement\nFROM Ticket\nWHERE date_heure >= @start AND date_heure < @end\nORDER BY date_heure ASC;\n";
+//# sourceMappingURL=queries.d.ts.map

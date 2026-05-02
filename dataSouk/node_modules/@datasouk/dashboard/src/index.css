@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+ * Base globaux : on pose les couleurs en CSS direct (pas `@apply`) pour
+ * éviter les pièges de résolution `@apply` avec utilitaires custom dans
+ * `@layer base`. Les classes Tailwind (`bg-noir-900`, etc.) restent
+ * disponibles depuis le JSX/TSX.
+ */
+@layer base {
+  html,
+  body,
+  #root {
+    min-height: 100vh;
+    background-color: #07080a;
+    color: #cdd1d9;
+    font-family: 'Outfit', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body {
+    background-image:
+      radial-gradient(circle at 12% 0%, rgba(220, 38, 38, 0.18), transparent 45%),
+      radial-gradient(circle at 88% 8%, rgba(127, 29, 29, 0.22), transparent 50%),
+      linear-gradient(180deg, #07080a 0%, #050507 100%);
+    background-attachment: fixed;
+  }
+}
+
+@layer components {
+  .card-dark {
+    border-radius: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background-color: rgba(21, 23, 27, 0.7);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+  }
+  .card-glass {
+    border-radius: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background-image: linear-gradient(
+      to bottom right,
+      rgba(21, 23, 27, 0.85),
+      rgba(13, 14, 16, 0.85)
+    );
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(10px);
+  }
+  .label-eyebrow {
+    font-family: 'Outfit', system-ui, sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: #9aa0ad;
+  }
+  .text-muted {
+    color: #9aa0ad;
+  }
+}

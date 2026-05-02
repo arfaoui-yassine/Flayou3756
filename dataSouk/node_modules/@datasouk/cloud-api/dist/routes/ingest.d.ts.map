@@ -1,0 +1,1 @@
+{"version":3,"file":"ingest.d.ts","sourceRoot":"","sources":["../../src/routes/ingest.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,kBAAkB,EAAE,MAAM,SAAS,CAAC;AAClD,OAAO,KAAK,EAAE,MAAM,EAAE,MAAM,gBAAgB,CAAC;AAI7C,eAAO,MAAM,YAAY,EAAE,kBAAkB,CAAC;IAAE,IAAI,EAAE,MAAM,CAAA;CAAE,CAmE7D,CAAC"}
