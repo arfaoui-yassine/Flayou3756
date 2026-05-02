@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Star, Send } from "lucide-react";
 import { ar } from "@/locales/ar";
 import { BejiAvatar, BejiMode } from "./BejiAvatar";
 import { SwipeChoice } from "./SwipeChoice";
+import { useSound, pickRandom, SOUNDS, BUBBLE_TEXT } from "@/hooks/useSound";
 
 export interface Question {
   id: string;
@@ -19,18 +20,11 @@ interface QuestionCardProps {
   onAnswer: (answer: string, responseTime: number) => void;
   onSkip: () => void;
   isLoading?: boolean;
-  isAISuggested?: boolean;
 }
 
-const APPRECIATION_PHRASES = [
-  "يعيشك خويا!",
-  "بركا الله فيك!",
-  "تو نحسبوهالك",
-  "أحسنت!",
-];
-
-function getBejiMode(type: Question["type"], hasAnswered: boolean): BejiMode {
+function getBejiMode(type: Question["type"], hasAnswered: boolean, isImpatient: boolean): BejiMode {
   if (hasAnswered) return "grateful";
+  if (isImpatient) return "pointing"; // looks like he's demanding an answer
   switch (type) {
     case "rating": return "thinking";
     case "choice": return "pointing";
@@ -46,17 +40,68 @@ export function QuestionCard({ question, onAnswer, onSkip, isLoading = false }: 
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [openEndedAnswer, setOpenEndedAnswer] = useState("");
   const [hasAnswered, setHasAnswered] = useState(false);
-  const [appreciationPhrase] = useState(
-    () => APPRECIATION_PHRASES[Math.floor(Math.random() * APPRECIATION_PHRASES.length)]
-  );
 
-  const bejiMode = getBejiMode(question.type, hasAnswered);
+  // Sound & bubble state
+  const [bubbleText, setBubbleText] = useState<string | null>(null);
+  const [isImpatient, setIsImpatient] = useState(false);
+  const impatientTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasPlayedImpatient = useRef(false);
 
-  const handleAnswerClick = (answer: string) => {
+  // Preload all sounds
+  const thankSound1 = useSound(SOUNDS.thank[0]);
+  const thankSound2 = useSound(SOUNDS.thank[1]);
+  const impatientSound1 = useSound(SOUNDS.impatient[0]);
+  const impatientSound2 = useSound(SOUNDS.impatient[1]);
+
+  const thankSounds = [
+    { play: thankSound1.play, text: BUBBLE_TEXT.thank[0] },
+    { play: thankSound2.play, text: BUBBLE_TEXT.thank[1] },
+  ];
+  const impatientSounds = [
+    { play: impatientSound1.play, text: BUBBLE_TEXT.impatient[0] },
+    { play: impatientSound2.play, text: BUBBLE_TEXT.impatient[1] },
+  ];
+
+  const bejiMode = getBejiMode(question.type, hasAnswered, isImpatient);
+
+  // Idle timer — after 5s, Beji gets impatient
+  useEffect(() => {
+    if (hasAnswered || isLoading) return;
+
+    impatientTimerRef.current = setTimeout(() => {
+      if (!hasPlayedImpatient.current) {
+        hasPlayedImpatient.current = true;
+        setIsImpatient(true);
+        const chosen = pickRandom(impatientSounds);
+        setBubbleText(chosen.text);
+        chosen.play();
+      }
+    }, 5000);
+
+    return () => {
+      if (impatientTimerRef.current) {
+        clearTimeout(impatientTimerRef.current);
+      }
+    };
+  }, [hasAnswered, isLoading]);
+
+  const handleAnswerClick = useCallback((answer: string) => {
     setHasAnswered(true);
+    setIsImpatient(false);
+
+    // Clear impatient timer
+    if (impatientTimerRef.current) {
+      clearTimeout(impatientTimerRef.current);
+    }
+
+    // Play thank you sound + show bubble
+    const chosen = pickRandom(thankSounds);
+    setBubbleText(chosen.text);
+    chosen.play();
+
     const responseTime = Date.now() - startTime;
     onAnswer(answer, responseTime);
-  };
+  }, [startTime, onAnswer]);
 
   const handleOpenEndedSubmit = () => {
     if (openEndedAnswer.trim()) {
@@ -73,23 +118,37 @@ export function QuestionCard({ question, onAnswer, onSkip, isLoading = false }: 
           className="absolute z-30"
           style={{ top: "-170px", left: "-10px" }}
         >
-          <BejiAvatar mode={bejiMode} size="lg" />
+          {/* Shake animation when impatient */}
+          <motion.div
+            animate={isImpatient ? {
+              x: [0, -3, 3, -3, 3, 0],
+              transition: { duration: 0.4, repeat: 2 }
+            } : {}}
+          >
+            <BejiAvatar mode={bejiMode} size="lg" />
+          </motion.div>
         </div>
 
-        {/* Speech bubble — positioned next to Beji */}
+        {/* Speech bubble — shows appreciation or impatient text */}
         <AnimatePresence>
-          {hasAnswered && (
+          {bubbleText && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ delay: 0.2 }}
-              className="absolute z-40 whitespace-nowrap bg-white text-black text-xs font-black px-3 py-1.5 rounded-lg shadow-lg"
-              style={{ top: "-100px", left: "130px" }}
+              initial={{ opacity: 0, scale: 0.8, y: 5 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ delay: 0.1, type: "spring", stiffness: 300 }}
+              className={`absolute z-40 whitespace-nowrap text-xs font-black px-3 py-1.5 rounded-lg shadow-lg ${
+                hasAnswered
+                  ? "bg-white text-black"
+                  : "bg-[#ED1C24] text-white"
+              }`}
+              style={{ top: "-150px", left: "130px" }}
             >
-              {appreciationPhrase}
-              {/* Triangle pointer pointing left toward Beji */}
-              <div className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-0 h-0 border-t-[5px] border-t-transparent border-b-[5px] border-b-transparent border-r-[6px] border-r-white" />
+              {bubbleText}
+              {/* Triangle pointer */}
+              <div className={`absolute top-1/2 -left-1.5 -translate-y-1/2 w-0 h-0 border-t-[5px] border-t-transparent border-b-[5px] border-b-transparent border-r-[6px] ${
+                hasAnswered ? "border-r-white" : "border-r-[#ED1C24]"
+              }`} />
             </motion.div>
           )}
         </AnimatePresence>
