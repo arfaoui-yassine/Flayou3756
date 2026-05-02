@@ -30,7 +30,7 @@ RUN pnpm install --frozen-lockfile --prod
 COPY --from=builder /app/dist ./dist
 
 # Vite builds client into dist/public by default for this stack
-COPY --from=builder /app/dist/public ./dist/public 2>/dev/null || true
+RUN if [ -d /app/dist/public ]; then mkdir -p ./dist/public && cp -r /app/dist/public/* ./dist/public/; else mkdir -p ./dist/public; fi
 
 ENV NODE_ENV=production
 ENV PORT=3000
