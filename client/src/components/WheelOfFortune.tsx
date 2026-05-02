@@ -17,6 +17,7 @@ interface WheelOfFortuneProps {
   userPoints: number;
   spinCost: number;
   isLoading?: boolean;
+  getWeightedIndex?: () => number;
 }
 
 export function WheelOfFortune({
@@ -25,22 +26,37 @@ export function WheelOfFortune({
   userPoints,
   spinCost,
   isLoading = false,
+  getWeightedIndex,
 }: WheelOfFortuneProps) {
   const [isSpinning, setIsSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [lastWinner, setLastWinner] = useState<WheelPrize | null>(null);
+  const [isDiweyat, setIsDiweyat] = useState(false);
+  const [diweyatMessage, setDiweyatMessage] = useState("");
   const controls = useAnimation();
+
+  const DIWEYAT_MESSAGES = [
+    "إن شاء الله زَهرك حاضر",
+    "ربي يفتحها في وجهك",
+    "إن شاء الله فيها نصيبك",
+    "ربي يسهّلها عليك",
+  ];
 
   const handleSpin = async () => {
     if (userPoints < spinCost || isSpinning || isLoading) return;
 
     setIsSpinning(true);
     setLastWinner(null);
+    setIsDiweyat(false);
+    
+    // Use weighted index if provided, otherwise random
+    const randomIndex = getWeightedIndex
+      ? getWeightedIndex()
+      : Math.floor(Math.random() * prizes.length);
     
     // Epic 6-second spin duration
     const spinDuration = 6;
     const spins = 10 + Math.random() * 5; 
-    const randomIndex = Math.floor(Math.random() * prizes.length);
     
     const prizeAngle = 360 / prizes.length;
     const targetAngle = (prizes.length - randomIndex) * prizeAngle - (prizeAngle / 2);
@@ -53,15 +69,20 @@ export function WheelOfFortune({
       rotate: totalRotation,
       transition: {
         duration: spinDuration,
-        ease: [0.15, 0, 0.15, 1], // Super smooth start, dramatic deceleration
+        ease: [0.15, 0, 0.15, 1],
       }
     });
 
     // Landing sequence
-    setLastWinner(prizes[randomIndex]);
-    
-    // Celebration!
-    if (prizes[randomIndex].points > 0) {
+    const winner = prizes[randomIndex];
+    const isLoss = winner.label === "دعيوات خير";
+
+    if (isLoss) {
+      const msg = DIWEYAT_MESSAGES[Math.floor(Math.random() * DIWEYAT_MESSAGES.length)];
+      setDiweyatMessage(msg);
+      setIsDiweyat(true);
+    } else {
+      setLastWinner(winner);
       confetti({
         particleCount: 150,
         spread: 70,
@@ -295,6 +316,44 @@ export function WheelOfFortune({
                   className="w-full border border-white/20 hover:border-white/40 text-white text-xs font-bold py-4 uppercase tracking-widest transition-all"
                 >
                   {ar.close}
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* DIWEYAT KHIR OVERLAY */}
+        <AnimatePresence>
+          {isDiweyat && !isSpinning && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[100] flex items-center justify-center px-6 pointer-events-none"
+            >
+              <div className="relative w-full max-w-sm overflow-hidden border border-white/10 bg-[#0A0A0A] p-12 text-center shadow-2xl pointer-events-auto">
+                <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+
+                <motion.div
+                  initial={{ y: 8, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.15 }}
+                  className="mb-6 text-5xl"
+                >
+                  🤲
+                </motion.div>
+
+                <p className="text-[#555] text-xs uppercase tracking-[0.2em] font-black mb-3">دعيوات خير</p>
+                
+                <h2 className="text-2xl font-black text-white mb-8 leading-relaxed">
+                  {diweyatMessage}
+                </h2>
+                
+                <button
+                  onClick={() => setIsDiweyat(false)}
+                  className="w-full border border-[#222] hover:border-[#333] text-[#888] hover:text-white text-xs font-bold py-4 uppercase tracking-widest transition-all"
+                >
+                  حاول مرة أخرى
                 </button>
               </div>
             </motion.div>

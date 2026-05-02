@@ -9,15 +9,33 @@ interface WheelPrize {
   color: string;
 }
 
+// Weights control probability. Higher weight = higher chance.
+// Total weight = 100
 const wheelPrizes: WheelPrize[] = [
-  { id: "p1", label: "50 نقطة", points: 50, color: "#1A1A1A" },
-  { id: "p2", label: "100 نقطة", points: 100, color: "#111111" },
-  { id: "p3", label: "25 نقطة", points: 25, color: "#1A1A1A" },
-  { id: "p4", label: "150 نقطة", points: 150, color: "#111111" },
-  { id: "p5", label: "صندوق غامض", points: 0, color: "#1A1A1A" },
-  { id: "p6", label: "200 نقطة", points: 200, color: "#111111" },
-  { id: "p7", label: "75 نقطة", points: 75, color: "#1A1A1A" },
-  { id: "p8", label: "خصم مجاني", points: 0, color: "#111111" },
+  { id: "lose1", label: "دعيوات خير",      points: 0,    color: "#1A1A1A" }, // w:25
+  { id: "p1",    label: "200Mo إنترنت",    points: 30,   color: "#1A1A1A" }, // w:15
+  { id: "lose2", label: "دعيوات خير",      points: 0,    color: "#111111" }, // w:25
+  { id: "p2",    label: "1dt كاش",         points: 0,    color: "#111111" }, // w:12
+  { id: "lose3", label: "دعيوات خير",      points: 0,    color: "#1A1A1A" }, // w:25
+  { id: "p3",    label: "5dt كاش",         points: 0,    color: "#1A1A1A" }, // w:8
+  { id: "lose4", label: "دعيوات خير",      points: 0,    color: "#111111" }, // w:10 (last slice)
+  { id: "p4",    label: "كاش تليفون",      points: 0,    color: "#111111" }, // w:3
+  { id: "p5",    label: "40G إنترنت",      points: 50,   color: "#1A1A1A" }, // w:5
+  { id: "p6",    label: "سمارتفون",        points: 0,    color: "#111111" }, // w:1 (ultra-rare)
+];
+
+// Index pools weighted for spin outcome (out of 100 draws)
+const WEIGHTED_POOL: number[] = [
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // lose1 ×25
+  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, // lose2 ×25
+  4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, // lose3 ×25
+  6, 6, 6, 6, 6, 6, 6, 6, 6, 6,                                                 // lose4 ×10
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,                                 // 200Mo ×15
+  3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,                                           // 1dt ×12
+  5, 5, 5, 5, 5, 5, 5, 5,                                                        // 5dt ×8
+  8, 8, 8, 8, 8,                                                                  // 40G ×5
+  7, 7, 7,                                                                        // كاش تليفون ×3
+  9,                                                                              // سمارتفون ×1
 ];
 
 const fadeUp = {
@@ -32,7 +50,7 @@ export default function RoueElHadh() {
 
   const handleSpin = async (resultIndex: number) => {
     const prize = wheelPrizes[resultIndex];
-    const newPoints = userPoints - spinCost + prize.points;
+    const newPoints = Math.max(0, userPoints - spinCost + prize.points);
     setUserPoints(newPoints);
 
     setSpinHistory(prev => [
@@ -45,6 +63,10 @@ export default function RoueElHadh() {
     ]);
   };
 
+  // Expose weighted pool to WheelOfFortune via a prop resolver
+  const getWeightedIndex = () =>
+    WEIGHTED_POOL[Math.floor(Math.random() * WEIGHTED_POOL.length)];
+
   return (
     <div className="min-h-screen">
       <motion.div
@@ -54,8 +76,8 @@ export default function RoueElHadh() {
       >
         {/* Header */}
         <motion.div variants={fadeUp} className="mb-4">
-          <p className="label-red mb-3">Lucky Wheel</p>
-          <h1 className="text-5xl font-bold text-white">روّح الحظ</h1>
+          <p className="label-red mb-3">عَمّ الباجي</p>
+          <h1 className="text-5xl font-bold text-white">دوّر العجلة</h1>
         </motion.div>
 
         {/* Cost + Balance */}
@@ -78,6 +100,7 @@ export default function RoueElHadh() {
             onSpin={handleSpin}
             userPoints={userPoints}
             spinCost={spinCost}
+            getWeightedIndex={getWeightedIndex}
           />
         </motion.div>
 

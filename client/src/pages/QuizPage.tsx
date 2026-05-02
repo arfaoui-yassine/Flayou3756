@@ -121,6 +121,13 @@ export default function QuizPage() {
         wasSkipped: false,
       });
 
+      // Phase 1: Stop loading — QuestionCard shows "grateful" Beji
+      setIsLoading(false);
+
+      // Let the user see Beji's grateful reaction for 2 seconds
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Phase 2: Show points reward
       setLastReward({
         points: result.pointsEarned,
         trustScore: result.newTrustScore,
@@ -130,13 +137,13 @@ export default function QuizPage() {
       setTrustScore(result.newTrustScore);
       setQuestionsAnswered(questionsAnswered + 1);
 
+      // Phase 3: After 2s, move to next question
       setTimeout(() => {
         setCurrentQuestion(null);
         setShowReward(false);
-      }, 1500);
+      }, 2000);
     } catch (error) {
       console.error("Failed to submit answer:", error);
-    } finally {
       setIsLoading(false);
     }
   };

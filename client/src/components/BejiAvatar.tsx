@@ -1,64 +1,55 @@
 import React from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
+
+export type BejiMode = "idle" | "waving" | "thinking" | "writing" | "pointing" | "grateful";
 
 interface BejiAvatarProps {
-  mode?: "idle" | "pointing" | "thinking" | "happy";
+  mode?: BejiMode;
   className?: string;
+  size?: "sm" | "md" | "lg" | "xl";
 }
 
 /**
- * A placeholder for the platform's character.
- * For now, it renders a subtle placeholder that mimics the character's presence
- * until the USER provides the actual images.
+ * Available poses (transparent PNGs):
+ * - talking (hands open, explaining) → idle, waving
+ * - grateful (hand on heart) → grateful, thinking
+ * - writing (clipboard) → writing
+ * - pointing (finger point) → pointing
  */
-export function BejiAvatar({ mode = "idle", className = "" }: BejiAvatarProps) {
+const BEJI_IMAGES: Record<BejiMode, string> = {
+  idle: "/assets/beji/beji-talking.png",
+  waving: "/assets/beji/beji-talking.png",
+  thinking: "/assets/beji/beji-talking.png",
+  writing: "/assets/beji/beji-writing.png",
+  pointing: "/assets/beji/beji-pointing.png",
+  grateful: "/assets/beji/beji-grateful.png",
+};
+
+const SIZE_CLASSES = {
+  sm: "w-24 h-24",
+  md: "w-36 h-36",
+  lg: "w-48 h-48",
+  xl: "w-56 h-56",
+};
+
+/**
+ * Aam Lbeji — The platform's main character.
+ * Transparent PNG images, designed to "pop out" of containers.
+ */
+export function BejiAvatar({ mode = "idle", className = "", size = "md" }: BejiAvatarProps) {
   return (
-    <div className={`relative ${className}`}>
-      <motion.div
-        animate={{ 
-          y: [0, -4, 0],
-          scale: mode === "happy" ? [1, 1.05, 1] : 1
-        }}
-        transition={{ 
-          duration: 3, 
-          repeat: Infinity, 
-          ease: "easeInOut" 
-        }}
-        className="w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-[#222] to-[#000] border-2 border-white/5 shadow-2xl overflow-hidden relative"
-      >
-        {/* Placeholder Head Silhouette */}
-        <div className="absolute inset-0 flex flex-col items-center justify-end pt-4">
-          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#333] rounded-full mb-[-10px] relative z-10" />
-          <div className="w-20 h-24 sm:w-24 sm:h-28 bg-[#222] rounded-t-3xl" />
-        </div>
-        
-        {/* Status Indicator */}
-        <AnimatePresence>
-          {mode === "thinking" && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute top-2 right-2 flex gap-1"
-            >
-              {[0, 1, 2].map(i => (
-                <motion.div
-                  key={i}
-                  animate={{ opacity: [0.3, 1, 0.3] }}
-                  transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
-                  className="w-1.5 h-1.5 bg-[#ED1C24] rounded-full"
-                />
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Glow behind */}
-        <div className="absolute inset-0 bg-[#ED1C24]/5 blur-xl pointer-events-none" />
-      </motion.div>
-
-      {/* Shadow */}
-      <div className="w-full h-2 bg-black/40 blur-md rounded-full mt-2 mx-auto scale-75" />
+    <div className={`flex-shrink-0 pointer-events-none select-none ${SIZE_CLASSES[size]} ${className}`}>
+      <motion.img
+        key={BEJI_IMAGES[mode]}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2 }}
+        src={BEJI_IMAGES[mode]}
+        alt="عم الباجي"
+        className="w-full h-full object-contain object-bottom"
+        style={{ filter: "drop-shadow(0 8px 24px rgba(0,0,0,0.6))" }}
+        draggable={false}
+      />
     </div>
   );
 }
