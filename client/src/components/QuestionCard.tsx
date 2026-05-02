@@ -68,30 +68,31 @@ export function QuestionCard({ question, onAnswer, onSkip, isLoading = false }: 
     <div className="w-full max-w-lg mx-auto px-4">
       <div className="relative" style={{ overflow: "visible" }}>
 
-        {/* BEJI + Speech Bubble Container */}
+        {/* BEJI — Breaking out from the top-left corner */}
         <div
-          className="absolute z-30 flex items-start gap-1"
-          style={{ top: "-120px", right: "auto", left: "-10px" }}
+          className="absolute z-30"
+          style={{ top: "-170px", left: "-10px" }}
         >
           <BejiAvatar mode={bejiMode} size="lg" />
-
-          {/* Speech bubble — closer to Beji */}
-          <AnimatePresence>
-            {hasAnswered && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ delay: 0.2 }}
-                className="mt-2 whitespace-nowrap bg-white text-black text-xs font-black px-3 py-1.5 rounded-lg shadow-lg relative"
-              >
-                {appreciationPhrase}
-                {/* Triangle pointer pointing left toward Beji */}
-                <div className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-0 h-0 border-t-[5px] border-t-transparent border-b-[5px] border-b-transparent border-l-[6px] border-l-white" />
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
+
+        {/* Speech bubble — positioned next to Beji */}
+        <AnimatePresence>
+          {hasAnswered && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ delay: 0.2 }}
+              className="absolute z-40 whitespace-nowrap bg-white text-black text-xs font-black px-3 py-1.5 rounded-lg shadow-lg"
+              style={{ top: "-100px", left: "130px" }}
+            >
+              {appreciationPhrase}
+              {/* Triangle pointer pointing left toward Beji */}
+              <div className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-0 h-0 border-t-[5px] border-t-transparent border-b-[5px] border-b-transparent border-r-[6px] border-r-white" />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* The Question Card */}
         <div className="relative bg-[#0A0A0A]/90 border border-white/5 shadow-2xl">
@@ -143,7 +144,7 @@ export function QuestionCard({ question, onAnswer, onSkip, isLoading = false }: 
 
             {/* Choices — Horizontal Pills */}
             {question.type === "choice" && question.options && (
-              <div className="flex flex-wrap gap-2 py-3 justify-center">
+              <div className="flex gap-2 py-3">
                 {question.options.map(option => (
                   <motion.button
                     key={option.id}
@@ -153,7 +154,7 @@ export function QuestionCard({ question, onAnswer, onSkip, isLoading = false }: 
                       handleAnswerClick(option.id);
                     }}
                     disabled={isLoading || hasAnswered}
-                    className={`py-2.5 px-5 rounded-full border text-sm font-bold transition-all ${selectedOption === option.id
+                    className={`flex-1 py-2.5 px-2 rounded-full border text-xs font-bold transition-all text-center truncate ${selectedOption === option.id
                       ? "border-[#ED1C24] bg-[#ED1C24] text-white"
                       : "border-[#222] text-[#888] hover:border-[#444] hover:text-white"
                       }`}
