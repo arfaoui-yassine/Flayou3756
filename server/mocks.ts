@@ -141,6 +141,10 @@ export const mockQuestions: MockQuestion[] = [
   },
 ];
 
+export function getQuestionById(questionId: string): MockQuestion | undefined {
+  return mockQuestions.find(question => question.id === questionId);
+}
+
 // Mock Rewards Dataset
 export const mockRewards: MockReward[] = [
   {

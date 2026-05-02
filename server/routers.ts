@@ -4,10 +4,254 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { nanoid } from "nanoid";
-import { getRandomMockQuestion, getAllMockRewards, getRandomWheelPrize, wheelPrizes } from "./mocks";
+import { getRandomMockQuestion, getAllMockRewards, getRandomWheelPrize, wheelPrizes, getQuestionById, mockQuestions } from "./mocks";
 import { calculateTrustScoreFromBehavior, calculatePointsEarned, getTrustLevel } from "./services/scoringService";
 import { inMemoryStore } from "./inMemoryStore";
+import type { SuggestedQuestion } from "./inMemoryStore";
 import type { BehaviorData } from "./services/scoringService";
+import { ENV } from "./_core/env";
+
+type WorkflowSnapshot = {
+  user_id: string;
+  session_id: string;
+  level: number;
+  xp: number;
+  completed_missions: string[];
+  recent_topics: string[];
+  skip_rate: number;
+  avg_time_on_question_sec: number;
+  engagement_score: number;
+  preferred_difficulty: "easy" | "medium" | "hard";
+};
+
+const clamp = (value: number, min: number, max: number) =>
+  Math.max(min, Math.min(max, value));
+
+const buildWorkflowSnapshot = (params: {
+  sessionId: string;
+  trustScore: number;
+  points: number;
+  userId?: string | null;
+}): WorkflowSnapshot => {
+  const answers = inMemoryStore.getAnswers(params.sessionId);
+  const totalAnswers = answers.length;
+  const skippedCount = answers.filter(answer => answer.wasSkipped).length;
+  const avgResponseTimeMs =
+    totalAnswers > 0
+      ? answers.reduce((sum, answer) => sum + answer.responseTime, 0) / totalAnswers
+      : 0;
+
+  const recentTopics = answers
+    .slice(-5)
+    .map(answer => getQuestionById(answer.questionId)?.type ?? "unknown");
+
+  const difficultyCounts: Record<"easy" | "medium" | "hard", number> = {
+    easy: 0,
+    medium: 0,
+    hard: 0,
+  };
+
+  answers.forEach(answer => {
+    const difficulty = getQuestionById(answer.questionId)?.difficulty;
+    if (difficulty) {
+      difficultyCounts[difficulty] += 1;
+    }
+  });
+
+  const preferredDifficulty = (Object.entries(difficultyCounts)
+    .sort((a, b) => b[1] - a[1])[0]?.[0] ?? "easy") as "easy" | "medium" | "hard";
+
+  const skipRate = totalAnswers > 0 ? skippedCount / totalAnswers : 0;
+  const avgTimeOnQuestionSec = avgResponseTimeMs / 1000;
+  const completionRate = totalAnswers > 0 ? (totalAnswers - skippedCount) / totalAnswers : 0;
+  const engagementScore = clamp(Math.round(params.trustScore), 0, 100);
+  const level = clamp(Math.floor(params.trustScore / 20), 0, 5);
+
+  return {
+    user_id: params.userId ?? `guest:${params.sessionId}`,
+    session_id: params.sessionId,
+    level,
+    xp: params.points,
+    completed_missions: totalAnswers >= 10 ? ["quiz"] : [],
+    recent_topics: recentTopics,
+    skip_rate: Number(skipRate.toFixed(4)),
+    avg_time_on_question_sec: Number(avgTimeOnQuestionSec.toFixed(2)),
+    engagement_score: engagementScore,
+    preferred_difficulty: preferredDifficulty,
+  };
+};
+
+interface N8nSuggestedQuestion {
+  question: string;
+  possible_answers: string;
+  topic: string;
+  difficulty: string;
+  reason: string;
+  xp_reward: number;
+}
+
+interface N8nWebhookResponse {
+  suggested_questions: N8nSuggestedQuestion[];
+  total: number;
+}
+
+/**
+ * Parse the possible_answers string from n8n into structured options.
+ * Format: "1 (label), 2 (label), ..." or comma-separated values
+ */
+const parsePossibleAnswers = (
+  raw: string
+): Array<{ id: string; label: string; labelAr: string }> | undefined => {
+  if (!raw || raw.trim() === "") return undefined;
+
+  // Split by Arabic comma or regular comma
+  const parts = raw.split(/[،,]/).map(s => s.trim()).filter(Boolean);
+  if (parts.length < 2) return undefined;
+
+  return parts.map((part, idx) => {
+    // Try to extract number prefix like "1 (text)" or "1- text"
+    const match = part.match(/^\d+\s*[\-\(\)]?\s*(.+?)\)?$/);
+    const label = match ? match[1].trim() : part.trim();
+    return {
+      id: `ai_opt_${idx}`,
+      label,
+      labelAr: label, // Already in Arabic from the workflow
+    };
+  });
+};
+
+/**
+ * Convert an n8n suggested question into the app's SuggestedQuestion format.
+ */
+const convertN8nQuestion = (
+  q: N8nSuggestedQuestion,
+  index: number
+): SuggestedQuestion => {
+  const options = parsePossibleAnswers(q.possible_answers);
+  const difficulty = (["easy", "medium", "hard"].includes(q.difficulty)
+    ? q.difficulty
+    : "easy") as "easy" | "medium" | "hard";
+
+  // Determine question type based on options
+  let type: "swipe" | "rating" | "choice" | "open_ended";
+  if (!options || options.length === 0) {
+    type = "open_ended";
+  } else if (options.length === 2) {
+    type = "swipe";
+  } else {
+    type = "choice";
+  }
+
+  return {
+    id: `ai_q_${Date.now()}_${index}`,
+    type,
+    text: q.question,
+    options,
+    difficulty,
+    pointsValue: q.xp_reward || 15,
+    topic: q.topic,
+    isAISuggested: true,
+  };
+};
+
+/**
+ * Send the workflow snapshot to n8n and return the suggested questions.
+ * Returns null if the webhook is unavailable or returns an error.
+ */
+const fetchSuggestedQuestions = async (
+  snapshot: WorkflowSnapshot
+): Promise<SuggestedQuestion[] | null> => {
+  if (!ENV.n8nWorkflowUrl) {
+    console.warn("[Workflow] N8N_WORKFLOW_URL not configured");
+    return null;
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000); // 15s timeout
+
+    const response = await fetch(ENV.n8nWorkflowUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "true",
+      },
+      body: JSON.stringify(snapshot),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+
+    if (!response.ok) {
+      const body = await response.text().catch(() => "");
+      console.warn(`[Workflow] N8N responded ${response.status}: ${body}`);
+      return null;
+    }
+
+    const data = (await response.json()) as N8nWebhookResponse;
+
+    if (!data.suggested_questions || !Array.isArray(data.suggested_questions)) {
+      console.warn("[Workflow] Invalid response format:", data);
+      return null;
+    }
+
+    const questions = data.suggested_questions.map((q, i) =>
+      convertN8nQuestion(q, i)
+    );
+
+    console.log(
+      `[Workflow] Received ${questions.length} suggested questions from n8n`
+    );
+    return questions;
+  } catch (error) {
+    console.warn("[Workflow] N8N request failed", error);
+    return null;
+  }
+};
+
+/**
+ * Fire-and-forget snapshot send (used on answer submission).
+ */
+const sendWorkflowSnapshot = async (snapshot: WorkflowSnapshot) => {
+  if (!ENV.n8nWorkflowUrl) {
+    console.warn("[Workflow] N8N_WORKFLOW_URL not configured");
+    return;
+  }
+
+  try {
+    const response = await fetch(ENV.n8nWorkflowUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "true",
+      },
+      body: JSON.stringify(snapshot),
+    });
+
+    if (!response.ok) {
+      const body = await response.text().catch(() => "");
+      console.warn(`[Workflow] N8N responded ${response.status}: ${body}`);
+    }
+  } catch (error) {
+    console.warn("[Workflow] N8N request failed", error);
+  }
+};
+
+/**
+ * Get a fallback mock question formatted as a SuggestedQuestion.
+ */
+const getFallbackMockQuestion = (): SuggestedQuestion => {
+  const q = getRandomMockQuestion();
+  return {
+    id: q.id,
+    type: q.type,
+    text: q.textAr,
+    options: q.options,
+    difficulty: q.difficulty,
+    pointsValue: q.pointsValue,
+    isAISuggested: false,
+  };
+};
 
 export const appRouter = router({
   system: systemRouter,
@@ -42,15 +286,67 @@ export const appRouter = router({
   missions: router({
     getNext: publicProcedure
       .input(z.object({ sessionId: z.string() }))
-      .query(async ({ input }) => {
-        const question = getRandomMockQuestion();
+      .query(async ({ input, ctx }) => {
+        // Try to serve a cached AI-suggested question first
+        const cached = inMemoryStore.getNextSuggestedQuestion(input.sessionId);
+        if (cached) return cached;
+
+        // No cached suggestions — try fetching from n8n
+        const session = inMemoryStore.getSession(input.sessionId);
+        if (session) {
+          const snapshot = buildWorkflowSnapshot({
+            sessionId: input.sessionId,
+            trustScore: session.trustScore,
+            points: session.points,
+            userId: ctx.user?.openId ?? null,
+          });
+
+          const suggestions = await fetchSuggestedQuestions(snapshot);
+          if (suggestions && suggestions.length > 0) {
+            inMemoryStore.setSuggestedQuestions(input.sessionId, suggestions);
+            return inMemoryStore.getNextSuggestedQuestion(input.sessionId)!;
+          }
+        }
+
+        // Fallback to mock question
+        return getFallbackMockQuestion();
+      }),
+
+    getSuggested: publicProcedure
+      .input(z.object({ sessionId: z.string() }))
+      .mutation(async ({ input, ctx }) => {
+        const session = inMemoryStore.getSession(input.sessionId);
+        if (!session) {
+          throw new Error("Session not found");
+        }
+
+        // Build snapshot from current session state
+        const snapshot = buildWorkflowSnapshot({
+          sessionId: input.sessionId,
+          trustScore: session.trustScore,
+          points: session.points,
+          userId: ctx.user?.openId ?? null,
+        });
+
+        // Fetch from n8n workflow
+        const suggestions = await fetchSuggestedQuestions(snapshot);
+
+        if (suggestions && suggestions.length > 0) {
+          // Cache the suggestions
+          inMemoryStore.setSuggestedQuestions(input.sessionId, suggestions);
+          return {
+            questions: suggestions,
+            source: "ai" as const,
+            total: suggestions.length,
+          };
+        }
+
+        // Fallback to mock questions
+        const fallback = Array.from({ length: 5 }, () => getFallbackMockQuestion());
         return {
-          id: question.id,
-          type: question.type,
-          text: question.textAr, // Use Arabic text
-          options: question.options,
-          difficulty: question.difficulty,
-          pointsValue: question.pointsValue,
+          questions: fallback,
+          source: "fallback" as const,
+          total: fallback.length,
         };
       }),
 
@@ -63,6 +359,7 @@ export const appRouter = router({
         options: q.options,
         difficulty: q.difficulty,
         pointsValue: q.pointsValue,
+        isAISuggested: false,
       }));
     }),
   }),
@@ -79,7 +376,7 @@ export const appRouter = router({
           wasSkipped: z.boolean().default(false),
         })
       )
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         const session = inMemoryStore.getSession(input.sessionId);
         if (!session) {
           throw new Error("Session not found");
@@ -124,12 +421,42 @@ export const appRouter = router({
           questionsAnswered: answers.length,
         });
 
+        // Invalidate cached suggestions so next fetch gets fresh ones
+        inMemoryStore.invalidateSuggestedQuestions(input.sessionId);
+
+        const snapshot = buildWorkflowSnapshot({
+          sessionId: input.sessionId,
+          trustScore: newTrustScore,
+          points: newPoints,
+          userId: ctx.user?.openId ?? null,
+        });
+
+        void sendWorkflowSnapshot(snapshot);
+
         return {
           pointsEarned,
           totalPoints: newPoints,
           newTrustScore,
           questionsAnswered: answers.length,
         };
+      }),
+  }),
+
+  analytics: router({
+    snapshot: publicProcedure
+      .input(z.object({ sessionId: z.string() }))
+      .query(async ({ input, ctx }) => {
+        const session = inMemoryStore.getSession(input.sessionId);
+        if (!session) {
+          throw new Error("Session not found");
+        }
+
+        return buildWorkflowSnapshot({
+          sessionId: input.sessionId,
+          trustScore: session.trustScore,
+          points: session.points,
+          userId: ctx.user?.openId ?? null,
+        });
       }),
   }),
 

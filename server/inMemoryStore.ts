@@ -53,12 +53,30 @@ interface InMemoryWheelSpin {
   createdAt: Date;
 }
 
+export interface SuggestedQuestion {
+  id: string;
+  type: "swipe" | "rating" | "choice" | "open_ended";
+  text: string;
+  options?: Array<{ id: string; label: string; labelAr: string }>;
+  difficulty: "easy" | "medium" | "hard";
+  pointsValue: number;
+  topic?: string;
+  isAISuggested: boolean;
+}
+
+interface SuggestedQuestionsCache {
+  questions: SuggestedQuestion[];
+  cursor: number;
+  fetchedAt: Date;
+}
+
 class InMemoryStore {
   private sessions: Map<string, InMemorySession> = new Map();
   private answers: Map<string, InMemoryAnswer[]> = new Map();
   private behavioralMetrics: Map<string, InMemoryBehavioralMetrics> = new Map();
   private purchases: Map<string, InMemoryPurchase[]> = new Map();
   private wheelSpins: Map<string, InMemoryWheelSpin[]> = new Map();
+  private suggestedQuestions: Map<string, SuggestedQuestionsCache> = new Map();
 
   // Session Management
   createSession(sessionId: string): InMemorySession {
@@ -160,6 +178,45 @@ class InMemoryStore {
     };
   }
 
+  // Suggested Questions Cache
+  setSuggestedQuestions(sessionId: string, questions: SuggestedQuestion[]): void {
+    this.suggestedQuestions.set(sessionId, {
+      questions,
+      cursor: 0,
+      fetchedAt: new Date(),
+    });
+  }
+
+  getNextSuggestedQuestion(sessionId: string): SuggestedQuestion | null {
+    const cache = this.suggestedQuestions.get(sessionId);
+    if (!cache) return null;
+
+    // Cache expires after 5 minutes
+    const ageMs = Date.now() - cache.fetchedAt.getTime();
+    if (ageMs > 5 * 60 * 1000) {
+      this.suggestedQuestions.delete(sessionId);
+      return null;
+    }
+
+    if (cache.cursor >= cache.questions.length) return null;
+
+    const question = cache.questions[cache.cursor];
+    cache.cursor += 1;
+    return question;
+  }
+
+  hasSuggestedQuestions(sessionId: string): boolean {
+    const cache = this.suggestedQuestions.get(sessionId);
+    if (!cache) return false;
+    const ageMs = Date.now() - cache.fetchedAt.getTime();
+    if (ageMs > 5 * 60 * 1000) return false;
+    return cache.cursor < cache.questions.length;
+  }
+
+  invalidateSuggestedQuestions(sessionId: string): void {
+    this.suggestedQuestions.delete(sessionId);
+  }
+
   // Debug: Print all sessions
   getAllSessions() {
     return Array.from(this.sessions.values());
@@ -172,6 +229,7 @@ class InMemoryStore {
     this.behavioralMetrics.clear();
     this.purchases.clear();
     this.wheelSpins.clear();
+    this.suggestedQuestions.clear();
   }
 }
 

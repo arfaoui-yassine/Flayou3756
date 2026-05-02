@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { QuestionCard } from "@/components/QuestionCard";
 import { BejiAvatar } from "@/components/BejiAvatar";
@@ -12,11 +12,14 @@ interface Question {
   options?: Array<{ id: string; label: string; labelAr: string }>;
   difficulty: string;
   pointsValue: number;
+  topic?: string;
+  isAISuggested?: boolean;
 }
 
 export default function QuizPage() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
+  const [questionQueue, setQuestionQueue] = useState<Question[]>([]);
   const [points, setPoints] = useState(0);
   const [trustScore, setTrustScore] = useState(45);
   const [questionsAnswered, setQuestionsAnswered] = useState(0);
@@ -25,10 +28,32 @@ export default function QuizPage() {
   // Merged reward state: appreciation + score in one screen
   const [rewardPhase, setRewardPhase] = useState<null | "showing">(null);
   const [lastEarned, setLastEarned] = useState(0);
+  const [isAISource, setIsAISource] = useState(false);
 
   const submitAnswerMutation = trpc.submit.answer.useMutation();
   const trackEventMutation = trpc.behavior.trackEvent.useMutation();
   const createSessionMutation = trpc.session.create.useMutation();
+  const getSuggestedMutation = trpc.missions.getSuggested.useMutation();
+
+  // Fetch a batch of questions from the n8n workflow
+  const fetchQuestions = useCallback(async (sid: string) => {
+    try {
+      setIsLoading(true);
+      const result = await getSuggestedMutation.mutateAsync({ sessionId: sid });
+      setIsAISource(result.source === "ai");
+
+      if (result.questions.length > 0) {
+        // Set the first question as current, rest go into queue
+        setCurrentQuestion(result.questions[0]);
+        setQuestionQueue(result.questions.slice(1));
+      }
+    } catch (error) {
+      console.error("Failed to fetch suggested questions:", error);
+      setCurrentQuestion(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [getSuggestedMutation]);
 
   // Lock body scroll
   useEffect(() => {
@@ -44,93 +69,34 @@ export default function QuizPage() {
   // Initialize session
   useEffect(() => {
     const initSession = async () => {
-      const storedSessionId = localStorage.getItem("sessionId");
-      if (storedSessionId) {
-        setSessionId(storedSessionId);
-      } else {
-        try {
-          const result = await createSessionMutation.mutateAsync();
-          localStorage.setItem("sessionId", result.sessionId);
-          setSessionId(result.sessionId);
-        } catch (error) {
-          console.error("Failed to create session:", error);
-        }
+      try {
+        // Always create a fresh server-side session to avoid stale localStorage references
+        const result = await createSessionMutation.mutateAsync();
+        localStorage.setItem("sessionId", result.sessionId);
+        setSessionId(result.sessionId);
+      } catch (error) {
+        console.error("Failed to create session:", error);
       }
     };
     initSession();
   }, []);
 
-  // Load next question
+  // Load questions when session is ready
   useEffect(() => {
-    const loadQuestion = async () => {
-      if (!sessionId) return;
-
-      try {
-        setIsLoading(true);
-        const mockQuestions: Question[] = [
-          {
-            id: "q1",
-            type: "swipe",
-            text: "أنهي براند تفضل؟",
-            options: [
-              { id: "opt1", label: "Boga", labelAr: "بوقة", imageUrl: "/assets/brands/boga.png" },
-              { id: "opt2", label: "Fanta", labelAr: "فانتا", imageUrl: "/assets/brands/fanta.png" },
-            ],
-            difficulty: "easy",
-            pointsValue: 10,
-          },
-          {
-            id: "q2",
-            type: "swipe",
-            text: "أنهي شراب تختار؟",
-            options: [
-              { id: "opt1", label: "Hamoud", labelAr: "حمود", imageUrl: "/assets/brands/hamoud.png" },
-              { id: "opt2", label: "Coca-Cola", labelAr: "كوكا كولا", imageUrl: "/assets/brands/coca.png" },
-            ],
-            difficulty: "easy",
-            pointsValue: 10,
-          },
-          {
-            id: "q3",
-            type: "rating",
-            text: "قيّم رضاك عن جوميا",
-            difficulty: "easy",
-            pointsValue: 10,
-          },
-          {
-            id: "q4",
-            type: "choice",
-            text: "أنهي منصة تسوق تفضل؟",
-            options: [
-              { id: "opt1", label: "Jumia", labelAr: "جوميا" },
-              { id: "opt2", label: "Glovo", labelAr: "جلوفو" },
-              { id: "opt3", label: "Carrefour", labelAr: "كارفور" },
-            ],
-            difficulty: "easy",
-            pointsValue: 15,
-          },
-          {
-            id: "q5",
-            type: "open_ended",
-            text: "أنهي فئة منتجات تفضل؟",
-            difficulty: "medium",
-            pointsValue: 20,
-          },
-        ];
-
-        const randomQuestion = mockQuestions[Math.floor(Math.random() * mockQuestions.length)];
-        setCurrentQuestion(randomQuestion);
-      } catch (error) {
-        console.error("Failed to load question:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (sessionId && !currentQuestion && !rewardPhase) {
-      loadQuestion();
+    if (sessionId && !currentQuestion && questionQueue.length === 0 && questionsAnswered < 10 && !rewardPhase) {
+      fetchQuestions(sessionId);
     }
-  }, [sessionId, currentQuestion, rewardPhase]);
+  }, [sessionId, rewardPhase]);
+
+  // Serve next question from queue or fetch new batch
+  const loadNextQuestion = useCallback(() => {
+    if (questionQueue.length > 0) {
+      setCurrentQuestion(questionQueue[0]);
+      setQuestionQueue(prev => prev.slice(1));
+    } else if (sessionId && questionsAnswered < 10) {
+      fetchQuestions(sessionId);
+    }
+  }, [questionQueue, sessionId, questionsAnswered, fetchQuestions]);
 
   const handleAnswer = async (answer: string, responseTime: number) => {
     if (!sessionId || !currentQuestion) return;
@@ -163,6 +129,8 @@ export default function QuizPage() {
       // Auto-advance to next question after 2.5s
       setTimeout(() => {
         setRewardPhase(null);
+        // Load next question after reward animation
+        setTimeout(() => loadNextQuestion(), 100);
       }, 2500);
     } catch (error) {
       console.error("Failed to submit answer:", error);
@@ -175,11 +143,16 @@ export default function QuizPage() {
 
     try {
       setIsLoading(true);
-      await trackEventMutation.mutateAsync({
+      await submitAnswerMutation.mutateAsync({
         sessionId,
-        eventType: "question_skipped",
+        questionId: currentQuestion.id,
+        answer: "",
+        responseTime: 0,
+        wasSkipped: true,
       });
+      setQuestionsAnswered(prev => prev + 1);
       setCurrentQuestion(null);
+      setTimeout(() => loadNextQuestion(), 100);
     } catch (error) {
       console.error("Failed to track skip:", error);
     } finally {
@@ -201,11 +174,24 @@ export default function QuizPage() {
         />
       </div>
 
-      {/* Question counter */}
+      {/* Question counter + AI badge */}
       <div className="flex justify-between items-center px-5 py-3 max-w-lg mx-auto w-full flex-shrink-0">
         <span className="text-[#555] text-xs font-medium tracking-wide">
           {questionsAnswered}/10
         </span>
+
+        {/* AI Source indicator */}
+        {currentQuestion?.isAISuggested && (
+          <motion.span
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-[10px] font-medium text-[#ED1C24]/70 bg-[#ED1C24]/10 px-2 py-0.5 rounded-full flex items-center gap-1"
+          >
+            <span>🤖</span>
+            <span>سؤال مخصص ليك</span>
+          </motion.span>
+        )}
+
         <span className="text-[#555] text-xs font-medium">
           {points} نقطة
         </span>
@@ -230,6 +216,7 @@ export default function QuizPage() {
                 onAnswer={handleAnswer}
                 onSkip={handleSkip}
                 isLoading={isLoading}
+                isAISuggested={currentQuestion.isAISuggested}
               />
             </motion.div>
           )}

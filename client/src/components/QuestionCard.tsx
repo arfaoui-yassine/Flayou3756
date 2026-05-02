@@ -19,6 +19,7 @@ interface QuestionCardProps {
   onAnswer: (answer: string, responseTime: number) => void;
   onSkip: () => void;
   isLoading?: boolean;
+  isAISuggested?: boolean;
 }
 
 const APPRECIATION_PHRASES = [
