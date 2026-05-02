@@ -10,6 +10,16 @@
 
 ---
 
+<img width="1896" height="868" alt="image" src="https://github.com/user-attachments/assets/99045468-a22a-47a7-9ce6-6550d52bf45c" />
+
+<br>
+
+<img width="1679" height="356" alt="image" src="https://github.com/user-attachments/assets/df49f2a7-35fd-4b20-94ae-0b80921dc4f2" />
+
+
+
+---
+
 ## 📋 Table des matières
 
 - [Vue d'ensemble](#-vue-densemble)
