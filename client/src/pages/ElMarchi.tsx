@@ -113,13 +113,16 @@ export default function ElMarchi() {
         className="max-w-lg mx-auto px-5 pt-10 pb-8"
       >
         {/* Header */}
-        <motion.div variants={fadeUp} className="mb-8">
-          <p className="text-[#ED1C24] text-[10px] uppercase tracking-[0.2em] font-black mb-1">عَمّ الباجي</p>
-          <h1 className="text-3xl font-bold text-white mb-3">السوق</h1>
-          <div className="flex items-baseline gap-2">
-            <span className="text-[#888] text-xs">رصيدك:</span>
-            <span className="text-white text-xl font-bold">{userPoints}</span>
-            <span className="text-[#555] text-xs">نقطة</span>
+        <motion.div variants={fadeUp} className="mb-8 flex items-center gap-4">
+          <img src="/assets/beji/marketplace.png" alt="السوق" className="w-14 h-14 object-contain" draggable={false} />
+          <div>
+            <p className="text-[#ED1C24] text-[10px] uppercase tracking-[0.2em] font-black mb-1">عَمّ الباجي</p>
+            <h1 className="text-3xl font-bold text-white">السوق</h1>
+            <div className="flex items-baseline gap-2 mt-1">
+              <span className="text-[#888] text-xs">رصيدك:</span>
+              <span className="text-white text-xl font-bold">{userPoints}</span>
+              <span className="text-[#555] text-xs">نقطة</span>
+            </div>
           </div>
         </motion.div>
 
