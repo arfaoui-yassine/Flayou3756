@@ -1,0 +1,17 @@
+export const ar = {
+  app_title: 'داتاسوق',
+  peak_hour: 'ساعة الذروة',
+  top_product: 'أفضل فئة',
+  stock_alert: 'تنبيه المخزون',
+  tickets_today: 'تذاكر اليوم',
+  setup: 'الإعداد',
+  home: 'الرئيسية',
+  products: 'المنتجات',
+  alerts: 'التنبيهات',
+  sync: 'المزامنة',
+  lang_fr: 'FR',
+  lang_ar: 'عربي',
+  consent_title: 'الموافقة',
+  submit: 'حفظ',
+  pending: 'قيد الانتظار',
+};

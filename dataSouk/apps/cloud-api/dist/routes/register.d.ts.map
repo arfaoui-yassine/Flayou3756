@@ -1,0 +1,1 @@
+{"version":3,"file":"register.d.ts","sourceRoot":"","sources":["../../src/routes/register.ts"],"names":[],"mappings":"AACA,OAAO,KAAK,EAAE,kBAAkB,EAAE,MAAM,SAAS,CAAC;AAClD,OAAO,KAAK,EAAE,MAAM,EAAE,MAAM,gBAAgB,CAAC;AAG7C,eAAO,MAAM,cAAc,EAAE,kBAAkB,CAAC;IAAE,IAAI,EAAE,MAAM,CAAA;CAAE,CAwB/D,CAAC"}

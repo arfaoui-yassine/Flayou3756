@@ -1,0 +1,13 @@
+{
+  "name": "datasouk",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev:agent": "npm -w apps/agent run dev",
+    "dev:dashboard": "npm -w apps/dashboard run dev",
+    "dev:cloud": "npm -w apps/cloud-api run dev",
+    "build": "npm -w packages/shared run build && npm -w apps/agent run build && npm -w apps/dashboard run build && npm -w apps/cloud-api run build",
+    "test": "npm -w apps/agent run test",
+    "example:db": "node scripts/create-example-innova-db.cjs"
+  }
+}

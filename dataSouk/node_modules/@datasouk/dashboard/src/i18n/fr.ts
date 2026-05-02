@@ -1,0 +1,17 @@
+export const fr = {
+  app_title: 'DataSouk',
+  peak_hour: 'Heure de pointe',
+  top_product: 'Top catégorie',
+  stock_alert: 'Alerte stock',
+  tickets_today: "Tickets aujourd'hui",
+  setup: 'Configuration',
+  home: 'Accueil',
+  products: 'Produits',
+  alerts: 'Alertes',
+  sync: 'Synchronisation',
+  lang_fr: 'FR',
+  lang_ar: 'عربي',
+  consent_title: 'Consentement',
+  submit: 'Enregistrer',
+  pending: 'En attente',
+};
