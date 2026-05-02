@@ -1,31 +1,25 @@
-# Aam Beji
+﻿# Aam Beji — عم الباجي
 
-![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6?style=flat-square&logo=typescript&logoColor=white)
-![React](https://img.shields.io/badge/React-19-61dafb?style=flat-square&logo=react&logoColor=black)
-![tRPC](https://img.shields.io/badge/tRPC-11-2596be?style=flat-square)
-![n8n](https://img.shields.io/badge/n8n-AI%20Workflow-ea4b71?style=flat-square&logo=n8n&logoColor=white)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-19-61dafb?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-7-646cff?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![tRPC](https://img.shields.io/badge/tRPC-11-2596be?style=flat-square)](https://trpc.io/)
+[![n8n](https://img.shields.io/badge/n8n-AI%20Workflow-ea4b71?style=flat-square&logo=n8n&logoColor=white)](https://n8n.io/)
+[![Framer Motion](https://img.shields.io/badge/Framer%20Motion-animations-e91e8c?style=flat-square&logo=framer&logoColor=white)](https://www.framer.com/motion/)
 
-A mobile-first behavioral intelligence platform for the Tunisian market. Users answer personalized micro-survey questions in Tunisian Arabic (Derja), earn points, and unlock rewards, while an AI-powered n8n workflow adapts future questions to each user's behavior profile in real time.
----
+> **عم الباجي** (Aam Beji) is a beloved Tunisian cultural figure — the platform's animated mascot who guides users through surveys with reactive poses and authentic Tunisian dialect voice lines.
 
-## Screenshots
-
-<div style="display: flex; gap: 10px;">
-  <img src="media/Capture d'écran 2026-05-02 070315.png" width="24%">
-  <img src="media/Capture d'écran 2026-05-02 070124.png" width="24%">
-  <img src="media/Capture d'écran 2026-05-02 070102.png" width="24%">
-  <img src="media/Capture d'écran 2026-05-02 070230.png" width="24%">
-</div>
----
+A mobile-first behavioral intelligence platform built for the Tunisian market. Users answer personalized micro-survey questions in Tunisian Arabic (Derja), earn points, and unlock rewards — while an AI-powered n8n workflow continuously adapts questions to each user's behavioral profile.
 
 **Key Features:**
-- 🤖 **AI-Personalized Questions** — n8n workflow generates questions based on your level, skip rate, response time, and engagement score
-- 🧠 **AI Performance Report** — LLM-powered async analysis of answer quality with strengths, improvements, and a behavioral score
+- 🤖 **AI-Personalized Questions** — n8n workflow generates questions based on level, skip rate, response time, and engagement score
+- 🧠 **AI Performance Report** — Async LLM analysis of answer quality: score, strengths, and improvements in Tunisian Arabic
+- 🎭 **Aam Beji Mascot** — Animated character that reacts to user behavior with pose changes and Tunisian speech bubbles
+- 🔊 **Sound System** — Tunisian dialect voice lines: thank-you sounds on answer, impatient sounds after 5s idle
 - 🎮 **Gamification** — Points, trust score, levels, streak tracking
 - 🎁 **Rewards Marketplace** — Redeem points for Jumia, Glovo, Netflix, Spotify vouchers
 - 🎡 **Wheel of Fortune** — Spin-to-win prize mechanic
-- 🔒 **Trust Score Engine** — 5-factor behavioral trust model (response time, skip rate, consistency, depth, continuity)
-
+- 🔒 **Trust Score Engine** — 5-factor behavioral model (response time, skip rate, consistency, depth, continuity)
 ---
 
 ## Table of Contents
@@ -98,9 +92,9 @@ graph TB
 
 The system is split into three layers:
 
-- **Client** — React 19 SPA served by Vite. All API calls go through a tRPC client over `/api/trpc`. No direct DB access from the browser.
-- **Server** — Single Express process that handles tRPC, OAuth, and static file serving. Manages all state through the in-memory store (demo) and fires async jobs (n8n snapshots, AI report generation) as fire-and-forget promises.
-- **External** — n8n handles AI question personalization via webhook; OpenRouter provides the LLM for the performance report. MySQL is wired up via Drizzle but not active in the demo phase.
+- **Client** â€” React 19 SPA served by Vite. All API calls go through a tRPC client over `/api/trpc`. No direct DB access from the browser.
+- **Server** â€” Single Express process that handles tRPC, OAuth, and static file serving. Manages all state through the in-memory store (demo) and fires async jobs (n8n snapshots, AI report generation) as fire-and-forget promises.
+- **External** â€” n8n handles AI question personalization via webhook; OpenRouter provides the LLM for the performance report. MySQL is wired up via Drizzle but not active in the demo phase.
 
 ---
 
@@ -110,13 +104,14 @@ The system is split into three layers:
 |-------|-----------|--------|
 | **Runtime** | Node.js 20 + TypeScript 5.9 | Server and type safety |
 | **Frontend** | React 19, Vite 7, Wouter | UI, bundling, client-side routing |
-| **Styling** | Tailwind CSS 4, Framer Motion | Utility styling, animations |
+| **Styling** | Tailwind CSS 4, Framer Motion | Utility styling, animations, character poses |
 | **API Layer** | tRPC 11 + SuperJSON | End-to-end type-safe RPC with rich serialization |
 | **Server State** | TanStack React Query | Caching, polling, mutations |
 | **Backend** | Express 4 | HTTP server, middleware |
 | **Database** | MySQL 2 via Drizzle ORM | Persistent storage (schema ready, in-memory for demo) |
 | **AI Workflows** | n8n (webhook) | Personalized question generation |
 | **AI Reports** | OpenRouter (`tencent/hy3-preview`) | Async answer quality analysis |
+| **Sound System** | Web Audio API (`useSound` hook) | Tunisian dialect voice lines (MP3) |
 | **Auth** | OAuth + Jose JWT | Cookie-based sessions |
 
 ---
@@ -124,43 +119,51 @@ The system is split into three layers:
 ## Project Structure
 
 ```
-Flayou3756/
-├── client/                    # Frontend application
-│   ├── src/
-│   │   ├── App.tsx            # App shell, routing, providers
-│   │   ├── main.tsx           # Entry point, tRPC/QueryClient setup
-│   │   ├── index.css          # Global styles + Tailwind
-│   │   ├── pages/             # Page components (5 routes)
-│   │   ├── components/        # Reusable UI components
-│   │   ├── contexts/          # React contexts (Session, Theme)
-│   │   ├── hooks/             # Custom hooks
-│   │   ├── locales/           # Arabic (Derja) translations
-│   │   └── lib/               # Utilities (tRPC client)
-│   └── index.html             # HTML entry
-├── server/
-│   ├── _core/                 # Server infrastructure
-│   │   ├── index.ts           # Express server bootstrap
-│   │   ├── trpc.ts            # tRPC initialization + middleware
-│   │   ├── context.ts         # Request context (auth)
-│   │   ├── env.ts             # Environment variable map
-│   │   ├── oauth.ts           # OAuth routes
-│   │   ├── sdk.ts             # Auth SDK
-│   │   └── vite.ts            # Vite dev server integration
-│   ├── routers.ts             # All tRPC route handlers
-│   ├── mocks.ts               # Mock questions, rewards, prizes
-│   ├── inMemoryStore.ts       # In-memory session/data store
-│   ├── db.ts                  # Database queries (Drizzle)
-│   └── services/
-│       ├── scoringService.ts  # Trust score + points calculation
-│       └── answerAnalyzer.ts  # Async AI answer quality analysis (OpenRouter)
-├── shared/                    # Shared types and constants
-├── drizzle/                   # Database schema + migrations
-│   ├── schema.ts              # Table definitions
-│   └── *.sql                  # SQL migrations
-├── .env                       # Environment variables
-├── vite.config.ts             # Vite + Tailwind + plugins
-├── drizzle.config.ts          # Drizzle CLI config
-└── package.json               # Dependencies and scripts
+Aam Beji (Flayou3756)/
+â”œâ”€â”€ client/
+â”‚   â”œâ”€â”€ public/
+â”‚   â”‚   â””â”€â”€ assets/
+â”‚   â”‚       â”œâ”€â”€ beji/              # Beji mascot PNG stickers (4 poses)
+â”‚   â”‚       â””â”€â”€ sounds/            # Tunisian dialect MP3 voice lines
+â”‚   â”‚           â”œâ”€â”€ yaatik_sahha.mp3       # Thank you (on answer)
+â”‚   â”‚           â”œâ”€â”€ ykather_khirk.mp3      # Thank you variant
+â”‚   â”‚           â”œâ”€â”€ hayahethnee.mp3        # Impatient (after 5s idle)
+â”‚   â”‚           â””â”€â”€ lem3ala9_woslou lel khala9.mp3
+â”‚   â””â”€â”€ src/
+â”‚       â”œâ”€â”€ App.tsx                # App shell, routing, providers
+â”‚       â”œâ”€â”€ main.tsx               # Entry point, tRPC/QueryClient setup
+â”‚       â”œâ”€â”€ index.css              # Global styles + Tailwind
+â”‚       â”œâ”€â”€ pages/                 # Page components (5 routes)
+â”‚       â”œâ”€â”€ components/
+â”‚       â”‚   â”œâ”€â”€ BejiAvatar.tsx     # Mascot character with pose switching
+â”‚       â”‚   â”œâ”€â”€ SwipeChoice.tsx    # VS-style brand battle card
+â”‚       â”‚   â”œâ”€â”€ QuestionCard.tsx   # Main question interaction component
+â”‚       â”‚   â”œâ”€â”€ WheelOfFortune.tsx # CSS conic-gradient spin wheel
+â”‚       â”‚   â””â”€â”€ Navigation.tsx     # Fixed bottom nav bar
+â”‚       â”œâ”€â”€ hooks/
+â”‚       â”‚   â””â”€â”€ useSound.ts        # Web Audio hook + SOUNDS/BUBBLE_TEXT constants
+â”‚       â”œâ”€â”€ contexts/              # React contexts (Session, Theme)
+â”‚       â”œâ”€â”€ locales/               # Arabic (Derja) translations
+â”‚       â””â”€â”€ lib/                   # Utilities (tRPC client)
+â”œâ”€â”€ server/
+â”‚   â”œâ”€â”€ _core/                     # Server infrastructure
+â”‚   â”‚   â”œâ”€â”€ index.ts               # Express server bootstrap
+â”‚   â”‚   â”œâ”€â”€ trpc.ts                # tRPC initialization + middleware
+â”‚   â”‚   â”œâ”€â”€ context.ts             # Request context (auth)
+â”‚   â”‚   â”œâ”€â”€ env.ts                 # Environment variable map
+â”‚   â”‚   â”œâ”€â”€ oauth.ts               # OAuth routes
+â”‚   â”‚   â””â”€â”€ vite.ts                # Vite dev server integration
+â”‚   â”œâ”€â”€ routers.ts                 # All tRPC route handlers
+â”‚   â”œâ”€â”€ mocks.ts                   # Mock questions, rewards, prizes
+â”‚   â”œâ”€â”€ inMemoryStore.ts           # In-memory session/data store
+â”‚   â”œâ”€â”€ db.ts                      # Database queries (Drizzle)
+â”‚   â””â”€â”€ services/
+â”‚       â”œâ”€â”€ scoringService.ts      # Trust score + points calculation
+â”‚       â””â”€â”€ answerAnalyzer.ts      # Async AI answer quality analysis
+â”œâ”€â”€ drizzle/                       # Database schema + migrations
+â”œâ”€â”€ .env                           # Environment variables
+â”œâ”€â”€ vite.config.ts
+â””â”€â”€ package.json
 ```
 
 ---
@@ -177,7 +180,7 @@ graph LR
         BP["Body Parser (50MB)"]
         Storage["Storage Proxy"]
         OAuthR["OAuth Routes"]
-        TRPC["/api/trpc → tRPC"]
+        TRPC["/api/trpc â†’ tRPC"]
         Vite["Vite Dev Server / Static Files"]
     end
 
@@ -202,9 +205,9 @@ graph LR
 Every request receives a context containing `{ req, res, user }`. The `user` is resolved from the session cookie via the auth SDK. Authentication is optional for `publicProcedure` routes.
 
 **Procedure Types** (`server/_core/trpc.ts`):
-- `publicProcedure` — No auth required (used for all game endpoints)
-- `protectedProcedure` — Requires authenticated user
-- `adminProcedure` — Requires admin role
+- `publicProcedure` â€” No auth required (used for all game endpoints)
+- `protectedProcedure` â€” Requires authenticated user
+- `adminProcedure` â€” Requires admin role
 
 ---
 
@@ -234,7 +237,7 @@ graph TD
     
     Router --> Analytics["analytics"]
     Analytics --> AnalyticsSnapshot["snapshot (query)"]
-    Analytics --> AnalyticsReport["report (query) 🤖"]
+    Analytics --> AnalyticsReport["report (query) ðŸ¤–"]
     
     Router --> Behavior["behavior"]
     Behavior --> BehaviorTrack["trackEvent (mutation)"]
@@ -371,17 +374,17 @@ graph LR
 
 | Factor | Weight | Evaluates |
 |--------|--------|-----------|
-| **Profile Depth** | 0–20 | Profile level + fields completed |
-| **Consistency** | 0–20 | Response time deviation from ideal (3.5s), answer stability |
-| **Effort** | 0–20 | Total questions answered + session time |
-| **Behavior** | 0–20 | Low skip rate, high completion, no speed-clicking (<1s penalty) |
-| **Session Continuity** | 0–20 | Session duration, no drop-offs |
+| **Profile Depth** | 0â€“20 | Profile level + fields completed |
+| **Consistency** | 0â€“20 | Response time deviation from ideal (3.5s), answer stability |
+| **Effort** | 0â€“20 | Total questions answered + session time |
+| **Behavior** | 0â€“20 | Low skip rate, high completion, no speed-clicking (<1s penalty) |
+| **Session Continuity** | 0â€“20 | Session duration, no drop-offs |
 
 **Points Calculation** (`calculatePointsEarned`):
 - Base points per question (10)
-- +10% bonus for thoughtful responses (2–5 seconds)
+- +10% bonus for thoughtful responses (2â€“5 seconds)
 - -20% penalty for speed-clicking (<1 second)
-- +15% bonus for high trust (≥70), -10% penalty for low trust (<30)
+- +15% bonus for high trust (â‰¥70), -10% penalty for low trust (<30)
 - +20% bonus for verified users
 
 ---
@@ -426,13 +429,13 @@ sequenceDiagram
 |-------|------|-----------|
 | `user_id` | string | Auth openId or `guest:<sessionId>` |
 | `session_id` | string | Session identifier |
-| `level` | number | `floor(trustScore / 20)`, clamped 0–5 |
+| `level` | number | `floor(trustScore / 20)`, clamped 0â€“5 |
 | `xp` | number | Accumulated points |
-| `completed_missions` | string[] | `["quiz"]` after ≥10 answers |
+| `completed_missions` | string[] | `["quiz"]` after â‰¥10 answers |
 | `recent_topics` | string[] | Last 5 answered question types |
-| `skip_rate` | number | Skipped / total (0–1) |
+| `skip_rate` | number | Skipped / total (0â€“1) |
 | `avg_time_on_question_sec` | number | Mean response time in seconds |
-| `engagement_score` | number | Clamped trust score (0–100) |
+| `engagement_score` | number | Clamped trust score (0â€“100) |
 | `preferred_difficulty` | string | Most-answered difficulty level |
 
 #### n8n Response Parsing
@@ -441,17 +444,17 @@ The n8n workflow returns questions as:
 ```json
 {
   "question": "Arabic question text",
-  "possible_answers": "1 (option A)، 2 (option B)، 3 (option C)",
+  "possible_answers": "1 (option A)ØŒ 2 (option B)ØŒ 3 (option C)",
   "topic": "Mobile Payment Usage",
   "difficulty": "easy",
   "xp_reward": 20
 }
 ```
 
-The server parses `possible_answers` (split by `،` or `,`) and auto-detects question type:
-- **0–1 options** → `open_ended`
-- **2 options** → `swipe` (binary choice)
-- **3+ options** → `choice` (multiple choice)
+The server parses `possible_answers` (split by `ØŒ` or `,`) and auto-detects question type:
+- **0â€“1 options** â†’ `open_ended`
+- **2 options** â†’ `swipe` (binary choice)
+- **3+ options** â†’ `choice` (multiple choice)
 
 **Fallback**: If the webhook is unavailable (timeout, error, invalid format), the server transparently falls back to local mock questions. Seen question IDs are tracked per session to prevent repetition.
 
@@ -478,7 +481,7 @@ sequenceDiagram
     A->>A: Parse JSON: score, summary, strengths, improvements
     A->>Store: setAIReport(sessionId, { status: "ready", ... })
     
-    Note over A,OR: If LLM fails → behavioral fallback
+    Note over A,OR: If LLM fails â†’ behavioral fallback
     A->>A: generateFallbackReport() from raw metrics
     A->>Store: setAIReport(sessionId, fallback)
 ```
@@ -487,13 +490,13 @@ sequenceDiagram
 
 | Field | Description |
 |-------|-------------|
-| `overallScore` | 0–100 performance score |
-| `summary` | 2–3 sentence summary in Tunisian Arabic |
+| `overallScore` | 0â€“100 performance score |
+| `summary` | 2â€“3 sentence summary in Tunisian Arabic |
 | `strengths` | List of positive behavioral traits |
 | `improvements` | List of suggested improvements |
-| `engagementLevel` | عالي / متوسط / منخفض |
-| `answerDepth` | عميق / متوسط / سطحي |
-| `consistencyRating` | ثابت / متقلب / غير كافي |
+| `engagementLevel` | Ø¹Ø§Ù„ÙŠ / Ù…ØªÙˆØ³Ø· / Ù…Ù†Ø®ÙØ¶ |
+| `answerDepth` | Ø¹Ù…ÙŠÙ‚ / Ù…ØªÙˆØ³Ø· / Ø³Ø·Ø­ÙŠ |
+| `consistencyRating` | Ø«Ø§Ø¨Øª / Ù…ØªÙ‚Ù„Ø¨ / ØºÙŠØ± ÙƒØ§ÙÙŠ |
 
 **Fallback behavior**: If OpenRouter returns an empty response or errors, `generateFallbackReport()` computes a score purely from behavioral metrics (avg response time, skip rate, open-ended answer length, trust score).
 
@@ -630,7 +633,7 @@ graph TD
 
 All pages are wrapped in `AnimatedRoute` which applies Framer Motion page transitions (`opacity + y` slide animation with `AnimatePresence mode="wait"`).
 
-**Navigation** is a fixed bottom bar with 4 items: البيت (Home), أسئلة (Quiz), السوق (Shop), حسابي (Profile). Active state is highlighted with the brand red `#ED1C24`.
+**Navigation** is a fixed bottom bar with 4 items: Ø§Ù„Ø¨ÙŠØª (Home), Ø£Ø³Ø¦Ù„Ø© (Quiz), Ø§Ù„Ø³ÙˆÙ‚ (Shop), Ø­Ø³Ø§Ø¨ÙŠ (Profile). Active state is highlighted with the brand red `#ED1C24`.
 
 ---
 
@@ -639,10 +642,10 @@ All pages are wrapped in `AnimatedRoute` which applies Framer Motion page transi
 | Route | Component | Description |
 |-------|-----------|-------------|
 | `/` | `Home` | Editorial hero with brand typography, CTA to start quiz, links to wheel and shop, behavioral insight teaser |
-| `/quiz` | `QuizPage` | Main quiz flow — fetches AI-suggested questions in batches, serves one at a time, shows reward + BejiAvatar animation, tracks progress (0/10). Shows 🤖 badge on AI-personalized questions |
-| `/marchi` | `ElMarchi` | Rewards marketplace — grid of purchasable items (Jumia, Glovo, Ooredoo, Netflix, Spotify vouchers), purchase confirmation overlay |
-| `/profile` | `ProfilePage` | User stats (live from server), trust score bar, activity metrics, **AI Performance Report card** (polls `analytics.report` every 5s, shows pending spinner → full report) |
-| `/roue` | `RoueElHadh` | Wheel of Fortune — animated spinning wheel with 8 vibrant segments, spin history, cost/balance display |
+| `/quiz` | `QuizPage` | Main quiz flow â€” fetches AI-suggested questions in batches, serves one at a time, shows reward + BejiAvatar animation, tracks progress (0/10). Shows ðŸ¤– badge on AI-personalized questions |
+| `/marchi` | `ElMarchi` | Rewards marketplace â€” grid of purchasable items (Jumia, Glovo, Ooredoo, Netflix, Spotify vouchers), purchase confirmation overlay |
+| `/profile` | `ProfilePage` | User stats (live from server), trust score bar, activity metrics, **AI Performance Report card** (polls `analytics.report` every 5s, shows pending spinner â†’ full report) |
+| `/roue` | `RoueElHadh` | Wheel of Fortune â€” animated spinning wheel with 8 vibrant segments, spin history, cost/balance display |
 
 ---
 
@@ -654,36 +657,64 @@ graph TD
         QC["QuestionCard"]
         WOF["WheelOfFortune"]
         Nav["Navigation"]
+        BA["BejiAvatar"]
+        SC["SwipeChoice"]
     end
 
-    subgraph QTypes["Question Types (in QuestionCard)"]
-        Swipe["Swipe (2 buttons)"]
-        Rating["Rating (5 stars)"]
-        Choice["Choice (N options)"]
-        Open["Open-ended (textarea)"]
+    subgraph QTypes["Question Types (rendered inside QuestionCard)"]
+        Swipe["swipe â†’ SwipeChoice (VS battle)"]
+        Rating["rating (5 stars, auto-submit)"]
+        Choice["choice (horizontal pills)"]
+        Open["open_ended (inline input + Send)"]
     end
 
+    QC --> BA
     QC --> Swipe
     QC --> Rating
     QC --> Choice
     QC --> Open
+    Swipe --> SC
 
     style QC fill:#ED1C24,stroke:#fff,color:#fff
     style WOF fill:#ED1C24,stroke:#fff,color:#fff
+    style BA fill:#2d3436,stroke:#ED1C24,color:#fff
+    style SC fill:#2d3436,stroke:#ED1C24,color:#fff
 ```
+
+#### BejiAvatar
+
+`Ø¹Ù… Ø§Ù„Ø¨Ø§Ø¬ÙŠ` â€” the platform's mascot character. Transparent PNG stickers that "pop out" of their containers via absolute positioning and drop-shadow.
+
+| Mode | Pose | Triggered when |
+|------|------|---------------|
+| `idle` | Talking / hands open | Swipe question, waiting |
+| `thinking` | Talking pose | Rating or open-ended question |
+| `pointing` | Finger point | Choice question |
+| `writing` | Clipboard | Writing mode |
+| `grateful` | Hand on heart | After the user submits any answer |
+
+On answer submission, Beji switches to `grateful` mode and a **speech bubble** with a random Tunisian appreciation phrase appears (`ÙŠØ¹ÙŠØ´Ùƒ Ø®ÙˆÙŠØ§!`, `Ø¨Ø±ÙƒØ§ Ø§Ù„Ù„Ù‡ ÙÙŠÙƒ!`, etc.).
+
+#### SwipeChoice
+
+VS-style brand battle component. Two option cards sit side by side separated by a red **VS** badge:
+- Supports optional `imageUrl` per option â€” shows brand logo if provided, initials letter fallback if not
+- On tap: selected card scales up + glows red, the other fades to 30% opacity
+- Animated red checkmark appears on the winner
+- One-shot: disabled after first selection
 
 #### QuestionCard
 
-The central interaction component. Renders differently based on `question.type`:
+The central interaction component. Wraps `BejiAvatar` + the question-specific UI inside a dark glassmorphism card (`bg-[#0A0A0A]/90 border border-white/5`). Beji is absolutely positioned to break out of the card's top-left corner.
 
 | Type | UI | Interaction |
 |------|----|-------------|
-| `swipe` | Two large tap buttons side by side | Tap either option |
-| `rating` | 5 interactive stars with fill animation | Tap star → auto-submit |
-| `choice` | Vertical list of selectable options | Tap to select → Submit button |
-| `open_ended` | RTL textarea | Type answer → Submit button |
+| `swipe` | `SwipeChoice` â€” two brand cards with VS badge | Tap a card â†’ auto-submit |
+| `rating` | 5 stars | Tap a star â†’ auto-submit |
+| `choice` | Horizontal scrollable pills | Tap to select â†’ auto-submit |
+| `open_ended` | Inline `<input>` with Send icon button | Type + Enter or tap Send |
 
-All types track `responseTime` from mount to submission. When `isAISuggested` is true, a 🤖 **"سؤال مخصص ليك"** badge appears in the header.
+All types set `hasAnswered = true` on submission, which disables the UI and triggers Beji's grateful animation. Options support an optional `imageUrl` field for brand logos.
 
 #### WheelOfFortune
 
@@ -728,8 +759,8 @@ graph TD
 
 - **SessionContext**: Provides `sessionId`, `points`, `trustScore`, `profileLevel`, `streak` with update methods. Initializes by creating/restoring a server-side session.
 - **ThemeContext**: Manages light/dark theme (defaults to light).
-- **Server state** is managed by TanStack React Query through tRPC hooks — queries auto-cache and mutations invalidate relevant caches.
-- **Page state** is local via `useState` — each page manages its own UI state (selected items, loading states, reward animations).
+- **Server state** is managed by TanStack React Query through tRPC hooks â€” queries auto-cache and mutations invalidate relevant caches.
+- **Page state** is local via `useState` â€” each page manages its own UI state (selected items, loading states, reward animations).
 
 ---
 
@@ -888,13 +919,13 @@ npm run dev
 
 1. Import the workflow into your n8n instance
 2. Set the **Webhook node** to accept **POST** requests
-3. **Activate** the workflow (toggle in the top-right — test mode won't work)
+3. **Activate** the workflow (toggle in the top-right â€” test mode won't work)
 4. Copy the production webhook URL into `N8N_WORKFLOW_URL` in `.env`
 5. If using ngrok, ensure the tunnel is running and the URL hasn't changed
 
 The workflow must return:
 ```json
-{ "suggested_questions": [ { "question": "...", "possible_answers": "A، B، C", "difficulty": "easy", "topic": "...", "xp_reward": 15 } ] }
+{ "suggested_questions": [ { "question": "...", "possible_answers": "AØŒ BØŒ C", "difficulty": "easy", "topic": "...", "xp_reward": 15 } ] }
 ```
 
 ### Other Commands
@@ -935,7 +966,7 @@ DATABASE_URL=mysql://user:pass@host:3306/dbname
 JWT_SECRET=your-secret
 ```
 
-> **Note**: The n8n webhook must be set to **POST** and the workflow must be **Activated** (not just in test mode). Free ngrok URLs change on restart — update `N8N_WORKFLOW_URL` accordingly.
+> **Note**: The n8n webhook must be set to **POST** and the workflow must be **Activated** (not just in test mode). Free ngrok URLs change on restart â€” update `N8N_WORKFLOW_URL` accordingly.
 
 ---
 
@@ -943,13 +974,13 @@ JWT_SECRET=your-secret
 
 ### Branch Strategy
 
-- `main` — stable, production-ready
-- Feature branches → PR to `main`
+- `main` â€” stable, production-ready
+- Feature branches â†’ PR to `main`
 - Merge conflicts must be resolved manually (especially `QuizPage.tsx` and `routers.ts` which are frequently edited)
 
 ### Known Limitations (Demo Phase)
 
-- **In-memory store**: all session data is lost on server restart — intended for demo/hackathon use
+- **In-memory store**: all session data is lost on server restart â€” intended for demo/hackathon use
 - **No-repeat questions**: tracked per session in memory; resets on restart
 - **n8n timeout**: the app allows up to 120 seconds for the n8n workflow (which calls an AI model internally). If your workflow is slower, increase the timeout in `server/routers.ts`
 - **AI report fallback**: if OpenRouter returns an empty response (rate limit, model issue), the app falls back to a behavioral heuristic report
