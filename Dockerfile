@@ -24,7 +24,7 @@ WORKDIR /app
 # Copy package files and install prod-only deps
 COPY package.json pnpm-lock.yaml ./
 COPY patches ./patches
-RUN pnpm install --frozen-lockfile --prod
+RUN pnpm install --frozen-lockfile
 
 # Copy built server + client assets from builder
 COPY --from=builder /app/dist ./dist
