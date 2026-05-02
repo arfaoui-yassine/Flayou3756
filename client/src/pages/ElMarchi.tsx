@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { ar } from "@/locales/ar";
-import { Check, X, ShoppingCart, Utensils, Store, Smartphone, Film, Music } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { toast } from "sonner";
 
 interface Reward {
@@ -9,7 +9,7 @@ interface Reward {
   name: string;
   description: string;
   points: number;
-  icon: React.ElementType;
+  imageUrl: string;
 }
 
 const mockRewards: Reward[] = [
@@ -18,42 +18,42 @@ const mockRewards: Reward[] = [
     name: "بطاقة جوميا",
     description: "رصيد 100 دينار",
     points: 200,
-    icon: ShoppingCart,
+    imageUrl: "/assets/beji/jumia.png",
   },
   {
     id: "glovo-50",
     name: "بطاقة جلوفو",
     description: "رصيد 50 دينار",
     points: 150,
-    icon: Utensils,
+    imageUrl: "/assets/beji/glovo.png",
   },
   {
     id: "carrefour-75",
     name: "بطاقة كارفور",
     description: "رصيد 75 دينار",
     points: 180,
-    icon: Store,
+    imageUrl: "/assets/beji/carrefour.png",
   },
   {
     id: "ooredoo-30",
     name: "رصيد أوريدو",
     description: "رصيد 30 دينار",
     points: 100,
-    icon: Smartphone,
+    imageUrl: "/assets/beji/ooredoo.png",
   },
   {
     id: "netflix-month",
     name: "نتفليكس شهر",
     description: "اشتراك شهر كامل",
     points: 250,
-    icon: Film,
+    imageUrl: "/assets/beji/netflix.png",
   },
   {
     id: "spotify-3months",
     name: "سبوتيفاي 3 أشهر",
     description: "اشتراك ثلاثة أشهر",
     points: 300,
-    icon: Music,
+    imageUrl: "/assets/beji/spotify.png",
   },
 ];
 
@@ -110,25 +110,23 @@ export default function ElMarchi() {
         variants={stagger}
         initial="initial"
         animate="animate"
-        className="max-w-3xl mx-auto px-5 pt-12 pb-8"
+        className="max-w-lg mx-auto px-5 pt-10 pb-8"
       >
         {/* Header */}
-        <motion.div variants={fadeUp} className="mb-12">
-          <p className="label-red mb-3">Marketplace</p>
-          <h1 className="text-5xl font-bold text-white mb-2">السوق</h1>
-          <div className="flex items-baseline gap-3 mt-4">
-            <span className="text-[#888] text-sm">رصيدك:</span>
-            <span className="text-white text-2xl font-bold">{userPoints}</span>
-            <span className="text-[#555] text-sm">نقطة</span>
+        <motion.div variants={fadeUp} className="mb-8">
+          <p className="text-[#ED1C24] text-[10px] uppercase tracking-[0.2em] font-black mb-1">عَمّ الباجي</p>
+          <h1 className="text-3xl font-bold text-white mb-3">السوق</h1>
+          <div className="flex items-baseline gap-2">
+            <span className="text-[#888] text-xs">رصيدك:</span>
+            <span className="text-white text-xl font-bold">{userPoints}</span>
+            <span className="text-[#555] text-xs">نقطة</span>
           </div>
         </motion.div>
-
-        <motion.div variants={fadeUp} className="section-divider mb-10" />
 
         {/* Rewards Grid */}
         <motion.div
           variants={stagger}
-          className="grid grid-cols-2 sm:grid-cols-3 gap-4"
+          className="grid grid-cols-2 gap-3"
         >
           {mockRewards.map(reward => {
             const canAfford = userPoints >= reward.points;
@@ -140,21 +138,31 @@ export default function ElMarchi() {
                 variants={fadeUp}
                 onClick={() => !isPurchased && handlePurchaseClick(reward)}
                 disabled={isPurchased}
-                className={`text-center py-8 px-4 border transition-colors flex flex-col items-center justify-center ${
+                className={`text-center py-5 px-3 border rounded-xl transition-all flex flex-col items-center justify-center gap-2 ${
                   isPurchased
                     ? "border-green-800 bg-green-900/10"
                     : canAfford
-                    ? "border-[#222] hover:border-[#ED1C24]/50"
-                    : "border-[#151515] opacity-40"
+                    ? "border-[#1a1a1a] bg-[#0a0a0a] hover:border-[#ED1C24]/40 hover:bg-[#0f0f0f]"
+                    : "border-[#111] bg-[#080808] opacity-40"
                 }`}
               >
-                <reward.icon size={32} className="text-white/40 mb-4" />
-                <h3 className="text-white font-semibold text-sm mb-1">{reward.name}</h3>
-                <p className="text-[#666] text-xs mb-4">{reward.description}</p>
-                <div className="text-[#ED1C24] font-bold text-sm">
+                {/* Brand Logo */}
+                <div className="w-14 h-14 rounded-xl bg-[#111] border border-[#1a1a1a] flex items-center justify-center p-2 overflow-hidden">
+                  <img
+                    src={reward.imageUrl}
+                    alt={reward.name}
+                    className="w-full h-full object-contain"
+                    draggable={false}
+                  />
+                </div>
+
+                <h3 className="text-white font-bold text-xs">{reward.name}</h3>
+                <p className="text-[#555] text-[10px]">{reward.description}</p>
+
+                <div className="text-[#ED1C24] font-black text-xs mt-1">
                   {isPurchased ? (
                     <span className="text-green-500 flex items-center justify-center gap-1">
-                      <Check size={14} />
+                      <Check size={12} />
                       تم
                     </span>
                   ) : (
@@ -172,39 +180,48 @@ export default function ElMarchi() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="fixed inset-0 bg-black/80 flex items-center justify-center p-5 z-50"
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-5 z-50"
         >
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="w-full max-w-sm border border-[#222] bg-black p-8"
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            className="w-full max-w-sm border border-[#222] bg-[#0a0a0a] rounded-xl p-8"
           >
             <div className="text-center flex flex-col items-center">
-              <selectedReward.icon size={48} className="text-[#ED1C24] mb-6" />
-              <h2 className="text-xl font-bold text-white mb-2">
+              {/* Brand Logo */}
+              <div className="w-20 h-20 rounded-2xl bg-[#111] border border-[#1a1a1a] flex items-center justify-center p-3 mb-5 overflow-hidden">
+                <img
+                  src={selectedReward.imageUrl}
+                  alt={selectedReward.name}
+                  className="w-full h-full object-contain"
+                  draggable={false}
+                />
+              </div>
+
+              <h2 className="text-lg font-bold text-white mb-1">
                 تأكيد الشراء
               </h2>
-              <p className="text-[#888] text-sm mb-6">{selectedReward.name}</p>
+              <p className="text-[#888] text-sm mb-5">{selectedReward.name}</p>
 
-              <div className="border border-[#222] py-4 px-6 mb-8">
-                <span className="text-[#ED1C24] font-bold text-2xl">
+              <div className="border border-[#1a1a1a] rounded-lg py-3 px-6 mb-6 bg-[#080808]">
+                <span className="text-[#ED1C24] font-black text-2xl">
                   {selectedReward.points}
                 </span>
                 <span className="text-[#666] text-sm mr-2">نقطة</span>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex gap-3 w-full">
                 <button
                   onClick={handleCancel}
                   disabled={purchaseState.status === "loading"}
-                  className="flex-1 border border-[#333] text-[#888] hover:text-white hover:border-[#555] py-3 transition-colors text-sm font-medium"
+                  className="flex-1 border border-[#222] hover:border-[#333] text-[#888] hover:text-white py-3 rounded-lg transition-colors text-sm font-medium"
                 >
                   {ar.cancel}
                 </button>
                 <button
                   onClick={handleConfirmPurchase}
                   disabled={purchaseState.status === "loading"}
-                  className="flex-1 bg-[#ED1C24] hover:bg-[#D91920] text-white py-3 transition-colors text-sm font-semibold"
+                  className="flex-1 bg-[#ED1C24] hover:bg-[#D91920] text-white py-3 rounded-lg transition-colors text-sm font-semibold"
                 >
                   {purchaseState.status === "loading" ? "جاري..." : "تأكيد"}
                 </button>
