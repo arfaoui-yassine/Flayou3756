@@ -1,59 +1,148 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { QuestionCard } from "@/components/QuestionCard";
+import { QuestionCard, Question } from "@/components/QuestionCard";
 import { BejiAvatar } from "@/components/BejiAvatar";
-import { trpc } from "@/lib/trpc";
 import { ar } from "@/locales/ar";
 
-interface Question {
-  id: string;
-  type: "swipe" | "rating" | "choice" | "open_ended";
-  text: string;
-  options?: Array<{ id: string; label: string; labelAr: string }>;
-  difficulty: string;
-  pointsValue: number;
-  topic?: string;
-  isAISuggested?: boolean;
-}
+// ─── 10 Static Demo Questions ─────────────────────────────────────
+// Written in Tunisian Darija. Covers: brand preference, satisfaction,
+// habits, and open-ended — typical for Tunisian market surveys.
+const DEMO_QUESTIONS: Question[] = [
+  // Q1 — Brand Swipe: Boga vs Fanta (images only, no text in options)
+  {
+    id: "q1-boga-fanta",
+    type: "swipe",
+    text: "أشنوّا تحب تشرب?",
+    options: [
+      { id: "boga", label: "Boga", labelAr: "بوقا", imageUrl: "/assets/beji/boga.jfif" },
+      { id: "fanta", label: "Fanta", labelAr: "فانتا", imageUrl: "/assets/beji/fanta.png" },
+    ],
+    difficulty: "easy",
+    pointsValue: 10,
+  },
+
+  // Q2 — Choice: Shopping frequency
+  {
+    id: "q2-shopping-freq",
+    type: "choice",
+    text: "قدّاش تمشي للسوبرمارشي?",
+    options: [
+      { id: "daily", label: "Daily", labelAr: "كل يوم" },
+      { id: "weekly", label: "Weekly", labelAr: "مرّة فالأسبوع" },
+      { id: "monthly", label: "Monthly", labelAr: "مرّة فالشهر" },
+      { id: "rarely", label: "Rarely", labelAr: "نادراً" },
+    ],
+    difficulty: "easy",
+    pointsValue: 10,
+  },
+
+  // Q3 — Rating: Mobile network satisfaction
+  {
+    id: "q3-network-rating",
+    type: "rating",
+    text: "كيفاش تلقى الرّيزو متاع تيليفونك?",
+    difficulty: "easy",
+    pointsValue: 15,
+  },
+
+  // Q4 — Choice: Payment method
+  {
+    id: "q4-payment-method",
+    type: "choice",
+    text: "كيفاش تحب تخلّص?",
+    options: [
+      { id: "cash", label: "Cash", labelAr: "كاش" },
+      { id: "card", label: "Card", labelAr: "كارط" },
+      { id: "mobile", label: "Mobile", labelAr: "موبايل" },
+      { id: "edinar", label: "E-Dinar", labelAr: "إي-دينار" },
+    ],
+    difficulty: "easy",
+    pointsValue: 10,
+  },
+
+  // Q5 — Swipe: Netflix vs Spotify
+  {
+    id: "q5-netflix-spotify",
+    type: "swipe",
+    text: "وين تقضّي وقتك أكثر?",
+    options: [
+      { id: "netflix", label: "Netflix", labelAr: "نتفليكس", imageUrl: "/assets/beji/netflix.png" },
+      { id: "spotify", label: "Spotify", labelAr: "سبوتيفاي", imageUrl: "/assets/beji/spotify.png" },
+    ],
+    difficulty: "easy",
+    pointsValue: 10,
+  },
+
+  // Q6 — Rating: Delivery service satisfaction
+  {
+    id: "q6-delivery-rating",
+    type: "rating",
+    text: "قدّاش راضي على خدمة التوصيل?",
+    difficulty: "medium",
+    pointsValue: 15,
+  },
+
+  // Q7 — Choice: Social media platform
+  {
+    id: "q7-social-media",
+    type: "choice",
+    text: "أشنوّا أكثر تطبيقة تستعملها?",
+    options: [
+      { id: "facebook", label: "Facebook", labelAr: "فيسبوك" },
+      { id: "instagram", label: "Instagram", labelAr: "انستا" },
+      { id: "tiktok", label: "TikTok", labelAr: "تيكتوك" },
+      { id: "youtube", label: "YouTube", labelAr: "يوتيوب" },
+    ],
+    difficulty: "easy",
+    pointsValue: 10,
+  },
+
+  // Q8 — Swipe: Carrefour vs Glovo (online vs offline)
+  {
+    id: "q8-carrefour-glovo",
+    type: "swipe",
+    text: "تحب تشري من الحانوت وإلاّ أونلاين?",
+    options: [
+      { id: "carrefour", label: "Carrefour", labelAr: "كارفور", imageUrl: "/assets/beji/carrefour.png" },
+      { id: "glovo", label: "Glovo", labelAr: "قلوفو", imageUrl: "/assets/beji/glovo.png" },
+    ],
+    difficulty: "easy",
+    pointsValue: 10,
+  },
+
+  // Q9 — Open ended: Product feedback
+  {
+    id: "q9-open-feedback",
+    type: "open_ended",
+    text: "شنوّة الحاجة إلّي تحب تتبدّل في حيّك?",
+    difficulty: "hard",
+    pointsValue: 25,
+  },
+
+  // Q10 — Rating: Overall satisfaction
+  {
+    id: "q10-overall-rating",
+    type: "rating",
+    text: "بشكل عام، قدّاش أنت راضي على حياتك اليومية?",
+    difficulty: "easy",
+    pointsValue: 15,
+  },
+];
 
 export default function QuizPage() {
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
-  const [questionQueue, setQuestionQueue] = useState<Question[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [points, setPoints] = useState(0);
-  const [trustScore, setTrustScore] = useState(45);
   const [questionsAnswered, setQuestionsAnswered] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Merged reward state: appreciation + score in one screen
+  // Merged reward state
   const [rewardPhase, setRewardPhase] = useState<null | "showing">(null);
   const [lastEarned, setLastEarned] = useState(0);
-  const [isAISource, setIsAISource] = useState(false);
 
-  const submitAnswerMutation = trpc.submit.answer.useMutation();
-  const trackEventMutation = trpc.behavior.trackEvent.useMutation();
-  const createSessionMutation = trpc.session.create.useMutation();
-  const getSuggestedMutation = trpc.missions.getSuggested.useMutation();
-
-  // Fetch a batch of questions from the n8n workflow
-  const fetchQuestions = useCallback(async (sid: string) => {
-    try {
-      setIsLoading(true);
-      const result = await getSuggestedMutation.mutateAsync({ sessionId: sid });
-      setIsAISource(result.source === "ai");
-
-      if (result.questions.length > 0) {
-        // Set the first question as current, rest go into queue
-        setCurrentQuestion(result.questions[0]);
-        setQuestionQueue(result.questions.slice(1));
-      }
-    } catch (error) {
-      console.error("Failed to fetch suggested questions:", error);
-      setCurrentQuestion(null);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [getSuggestedMutation]);
+  const currentQuestion =
+    currentIndex < DEMO_QUESTIONS.length && !rewardPhase
+      ? DEMO_QUESTIONS[currentIndex]
+      : null;
 
   // Lock body scroll
   useEffect(() => {
@@ -66,101 +155,45 @@ export default function QuizPage() {
     };
   }, []);
 
-  // Initialize session
-  useEffect(() => {
-    const initSession = async () => {
-      try {
-        // Always create a fresh server-side session to avoid stale localStorage references
-        const result = await createSessionMutation.mutateAsync();
-        localStorage.setItem("sessionId", result.sessionId);
-        setSessionId(result.sessionId);
-      } catch (error) {
-        console.error("Failed to create session:", error);
-      }
-    };
-    initSession();
+  const advanceToNext = useCallback(() => {
+    setRewardPhase(null);
+    setCurrentIndex((prev) => prev + 1);
   }, []);
 
-  // Load questions when session is ready
-  useEffect(() => {
-    if (sessionId && !currentQuestion && questionQueue.length === 0 && questionsAnswered < 10 && !rewardPhase) {
-      fetchQuestions(sessionId);
-    }
-  }, [sessionId, rewardPhase]);
+  const handleAnswer = useCallback(
+    async (answer: string, responseTime: number) => {
+      if (!currentQuestion) return;
 
-  // Serve next question from queue or fetch new batch
-  const loadNextQuestion = useCallback(() => {
-    if (questionQueue.length > 0) {
-      setCurrentQuestion(questionQueue[0]);
-      setQuestionQueue(prev => prev.slice(1));
-    } else if (sessionId && questionsAnswered < 10) {
-      fetchQuestions(sessionId);
-    }
-  }, [questionQueue, sessionId, questionsAnswered, fetchQuestions]);
-
-  const handleAnswer = async (answer: string, responseTime: number) => {
-    if (!sessionId || !currentQuestion) return;
-
-    try {
       setIsLoading(true);
-      const result = await submitAnswerMutation.mutateAsync({
-        sessionId,
-        questionId: currentQuestion.id,
-        answer,
-        responseTime,
-        wasSkipped: false,
-      });
 
+      // Simulate a tiny server delay for realism
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      const earned = currentQuestion.pointsValue;
+      setLastEarned(earned);
+      setPoints((prev) => prev + earned);
+      setQuestionsAnswered((prev) => prev + 1);
       setIsLoading(false);
 
-      // Single merged reward screen: appreciation + score together
-      setLastEarned(result.pointsEarned);
-      setPoints(result.totalPoints);
-      setTrustScore(result.newTrustScore);
-      setQuestionsAnswered(prev => prev + 1);
-
-      // Quick pause to let the card's speech bubble show (0.8s)
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // Let the thank-you bubble show briefly
+      await new Promise((resolve) => setTimeout(resolve, 800));
 
       // Show merged reward screen
       setRewardPhase("showing");
-      setCurrentQuestion(null);
 
-      // Auto-advance to next question after 2.5s
-      setTimeout(() => {
-        setRewardPhase(null);
-        // Load next question after reward animation
-        setTimeout(() => loadNextQuestion(), 100);
-      }, 2500);
-    } catch (error) {
-      console.error("Failed to submit answer:", error);
-      setIsLoading(false);
-    }
-  };
+      // Auto-advance after 2.5s
+      setTimeout(() => advanceToNext(), 2500);
+    },
+    [currentQuestion, advanceToNext]
+  );
 
-  const handleSkip = async () => {
-    if (!sessionId || !currentQuestion) return;
+  const handleSkip = useCallback(() => {
+    setQuestionsAnswered((prev) => prev + 1);
+    setCurrentIndex((prev) => prev + 1);
+  }, []);
 
-    try {
-      setIsLoading(true);
-      await submitAnswerMutation.mutateAsync({
-        sessionId,
-        questionId: currentQuestion.id,
-        answer: "",
-        responseTime: 0,
-        wasSkipped: true,
-      });
-      setQuestionsAnswered(prev => prev + 1);
-      setCurrentQuestion(null);
-      setTimeout(() => loadNextQuestion(), 100);
-    } catch (error) {
-      console.error("Failed to track skip:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const progress = (questionsAnswered / 10) * 100;
+  const progress = (questionsAnswered / DEMO_QUESTIONS.length) * 100;
+  const isComplete = currentIndex >= DEMO_QUESTIONS.length && !rewardPhase;
 
   return (
     <div className="h-screen overflow-hidden flex flex-col">
@@ -174,24 +207,11 @@ export default function QuizPage() {
         />
       </div>
 
-      {/* Question counter + AI badge */}
+      {/* Question counter */}
       <div className="flex justify-between items-center px-5 py-3 max-w-lg mx-auto w-full flex-shrink-0">
         <span className="text-[#555] text-xs font-medium tracking-wide">
-          {questionsAnswered}/10
+          {Math.min(questionsAnswered + 1, DEMO_QUESTIONS.length)}/{DEMO_QUESTIONS.length}
         </span>
-
-        {/* AI Source indicator */}
-        {currentQuestion?.isAISuggested && (
-          <motion.span
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="text-[10px] font-medium text-[#ED1C24]/70 bg-[#ED1C24]/10 px-2 py-0.5 rounded-full flex items-center gap-1"
-          >
-            <span>🤖</span>
-            <span>سؤال مخصص ليك</span>
-          </motion.span>
-        )}
-
         <span className="text-[#555] text-xs font-medium">
           {points} نقطة
         </span>
@@ -200,7 +220,6 @@ export default function QuizPage() {
       {/* Main content — centered, no scroll */}
       <div className="flex-1 flex items-center justify-center px-4">
         <AnimatePresence mode="wait">
-
           {/* Question Card */}
           {currentQuestion && !rewardPhase && (
             <motion.div
@@ -216,7 +235,6 @@ export default function QuizPage() {
                 onAnswer={handleAnswer}
                 onSkip={handleSkip}
                 isLoading={isLoading}
-                isAISuggested={currentQuestion.isAISuggested}
               />
             </motion.div>
           )}
@@ -242,9 +260,7 @@ export default function QuizPage() {
                   +{lastEarned}
                 </p>
                 <p className="text-white text-sm font-bold mb-1">شكراً على جوابك!</p>
-                <p className="text-[#555] text-xs">
-                  رصيدك: {points} نقطة
-                </p>
+                <p className="text-[#555] text-xs">رصيدك: {points} نقطة</p>
               </motion.div>
 
               {/* Auto-progress indicator */}
@@ -257,22 +273,8 @@ export default function QuizPage() {
             </motion.div>
           )}
 
-          {/* Loading between questions */}
-          {isLoading && !currentQuestion && !rewardPhase && (
-            <motion.div
-              key="loading"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="text-center"
-            >
-              <div className="w-6 h-6 border-2 border-[#333] border-t-[#ED1C24] rounded-full animate-spin mx-auto mb-3" />
-              <p className="text-[#555] text-xs">{ar.loading}</p>
-            </motion.div>
-          )}
-
           {/* Completion */}
-          {questionsAnswered >= 10 && !currentQuestion && !rewardPhase && (
+          {isComplete && (
             <motion.div
               key="complete"
               initial={{ opacity: 0, y: 16 }}
@@ -297,7 +299,6 @@ export default function QuizPage() {
               </button>
             </motion.div>
           )}
-
         </AnimatePresence>
       </div>
     </div>
