@@ -1,0 +1,274 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/* ═══════════════════════════════════════════════
+   3sg.tn-inspired: Pure black, white type, red accent
+   ═══════════════════════════════════════════════ */
+
+:root {
+  --radius: 0.5rem;
+
+  /* Core */
+  --background: #000000;
+  --foreground: #FFFFFF;
+
+  /* Cards — slightly lifted from pure black */
+  --card: #0A0A0A;
+  --card-foreground: #FFFFFF;
+
+  /* Popover */
+  --popover: #0A0A0A;
+  --popover-foreground: #FFFFFF;
+
+  /* Primary — Red accent */
+  --primary: #ED1C24;
+  --primary-foreground: #FFFFFF;
+
+  /* Secondary — Dark gray */
+  --secondary: #1A1A1A;
+  --secondary-foreground: #E5E5E5;
+
+  /* Muted */
+  --muted: #1A1A1A;
+  --muted-foreground: #888888;
+
+  /* Accent */
+  --accent: #ED1C24;
+  --accent-foreground: #FFFFFF;
+
+  /* Destructive */
+  --destructive: #ED1C24;
+  --destructive-foreground: #FFFFFF;
+
+  /* Borders & inputs */
+  --border: #222222;
+  --input: #1A1A1A;
+  --ring: #ED1C24;
+
+  /* Charts */
+  --chart-1: #ED1C24;
+  --chart-2: #FF4444;
+  --chart-3: #CC1111;
+  --chart-4: #991111;
+  --chart-5: #661111;
+
+  /* Sidebar */
+  --sidebar: #000000;
+  --sidebar-foreground: #FFFFFF;
+  --sidebar-primary: #ED1C24;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #ED1C24;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #222222;
+  --sidebar-ring: #ED1C24;
+}
+
+.dark {
+  --background: #000000;
+  --foreground: #FFFFFF;
+  --card: #0A0A0A;
+  --card-foreground: #FFFFFF;
+  --popover: #0A0A0A;
+  --popover-foreground: #FFFFFF;
+  --primary: #ED1C24;
+  --primary-foreground: #FFFFFF;
+  --secondary: #1A1A1A;
+  --secondary-foreground: #E5E5E5;
+  --muted: #1A1A1A;
+  --muted-foreground: #888888;
+  --accent: #ED1C24;
+  --accent-foreground: #FFFFFF;
+  --destructive: #ED1C24;
+  --destructive-foreground: #FFFFFF;
+  --border: #222222;
+  --input: #1A1A1A;
+  --ring: #ED1C24;
+  --chart-1: #ED1C24;
+  --chart-2: #FF4444;
+  --chart-3: #CC1111;
+  --chart-4: #991111;
+  --chart-5: #661111;
+  --sidebar: #000000;
+  --sidebar-foreground: #FFFFFF;
+  --sidebar-accent: #ED1C24;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #222222;
+  --sidebar-ring: #ED1C24;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-transparent text-foreground;
+    font-family: 'Inter', 'Cairo', sans-serif;
+    direction: rtl;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  html {
+    direction: rtl;
+    scroll-behavior: smooth;
+  }
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [type="button"]:not(:disabled),
+  [type="submit"]:not(:disabled),
+  [type="reset"]:not(:disabled),
+  a[href],
+  select:not(:disabled),
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled) {
+    @apply cursor-pointer;
+  }
+}
+
+@layer components {
+  .container {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+
+  .flex {
+    min-height: 0;
+    min-width: 0;
+  }
+
+  @media (min-width: 640px) {
+    .container {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .container {
+      padding-left: 3rem;
+      padding-right: 3rem;
+      max-width: 1280px;
+    }
+  }
+
+  /* Editorial text — outline stroke effect like 3sg.tn */
+  .text-outline {
+    -webkit-text-stroke: 1.5px #FFFFFF;
+    color: transparent;
+  }
+  .text-outline-red {
+    -webkit-text-stroke: 1.5px #ED1C24;
+    color: transparent;
+  }
+
+  /* Red label — small uppercase tag */
+  .label-red {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #ED1C24;
+  }
+
+  /* Section divider */
+  .section-divider {
+    border-top: 1px solid #222222;
+    width: 100%;
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #333333;
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #555555;
+}
+
+/* Smooth animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.4s ease-out;
+}
+
+/* RTL adjustments */
+[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+[dir="rtl"] input,
+[dir="rtl"] textarea {
+  text-align: right;
+}
