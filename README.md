@@ -1,8 +1,32 @@
-# Chnouwa Rayek? — شنوا رايك؟
+# شنوا رايك؟ — Chnouwa Rayek?
 
-**Behavioral Intelligence & Gamification Platform**
+![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6?style=flat-square&logo=typescript&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61dafb?style=flat-square&logo=react&logoColor=black)
+![tRPC](https://img.shields.io/badge/tRPC-11-2596be?style=flat-square)
+![n8n](https://img.shields.io/badge/n8n-AI%20Workflow-ea4b71?style=flat-square&logo=n8n&logoColor=white)
 
-A mobile-first web application built for the Tunisian market that collects user opinions through gamified micro-surveys in Tunisian Arabic (Derja). Users answer questions, earn points, and redeem rewards — while the platform builds a behavioral trust profile and uses an n8n AI workflow to generate personalized question suggestions.
+> **"شنوا رايك؟"** means *"What's your opinion?"* in Tunisian Arabic.
+
+A mobile-first behavioral intelligence platform for the Tunisian market. Users answer personalized micro-survey questions in Tunisian Arabic (Derja), earn points, and unlock rewards, while an AI-powered n8n workflow adapts future questions to each user's behavior profile in real time.
+---
+
+## Screenshots
+
+<div style="display: flex; gap: 10px;">
+  <img src="media/Capture d'écran 2026-05-02 070315.png" width="24%">
+  <img src="media/Capture d'écran 2026-05-02 070124.png" width="24%">
+  <img src="media/Capture d'écran 2026-05-02 070102.png" width="24%">
+  <img src="media/Capture d'écran 2026-05-02 070230.png" width="24%">
+</div>
+---
+
+**Key Features:**
+- 🤖 **AI-Personalized Questions** — n8n workflow generates questions based on your level, skip rate, response time, and engagement score
+- 🧠 **AI Performance Report** — LLM-powered async analysis of answer quality with strengths, improvements, and a behavioral score
+- 🎮 **Gamification** — Points, trust score, levels, streak tracking
+- 🎁 **Rewards Marketplace** — Redeem points for Jumia, Glovo, Netflix, Spotify vouchers
+- 🎡 **Wheel of Fortune** — Spin-to-win prize mechanic
+- 🔒 **Trust Score Engine** — 5-factor behavioral trust model (response time, skip rate, consistency, depth, continuity)
 
 ---
 
@@ -17,6 +41,7 @@ A mobile-first web application built for the Tunisian market that collects user 
   - [In-Memory Store](#in-memory-store)
   - [Scoring Service](#scoring-service)
   - [n8n Workflow Integration](#n8n-workflow-integration)
+  - [AI Performance Report](#ai-performance-report)
   - [Database Schema (Drizzle ORM)](#database-schema-drizzle-orm)
 - [Client Architecture](#client-architecture)
   - [App Shell & Routing](#app-shell--routing)
@@ -25,13 +50,14 @@ A mobile-first web application built for the Tunisian market that collects user 
   - [State Management](#state-management)
   - [Localization](#localization)
 - [Data Flow](#data-flow)
-  - [Quiz Flow (Question → Answer → Points)](#quiz-flow)
+  - [Quiz Flow](#quiz-flow)
   - [AI-Suggested Questions Flow](#ai-suggested-questions-flow)
   - [Trust Score Calculation](#trust-score-calculation)
 - [Getting Started](#getting-started)
 - [Environment Variables](#environment-variables)
+- [Contributing](#contributing)
 
----
+
 
 ## System Architecture
 
@@ -72,22 +98,28 @@ graph TB
     style External fill:#0f3460,stroke:#ED1C24,color:#fff
 ```
 
+The system is split into three layers:
+
+- **Client** — React 19 SPA served by Vite. All API calls go through a tRPC client over `/api/trpc`. No direct DB access from the browser.
+- **Server** — Single Express process that handles tRPC, OAuth, and static file serving. Manages all state through the in-memory store (demo) and fires async jobs (n8n snapshots, AI report generation) as fire-and-forget promises.
+- **External** — n8n handles AI question personalization via webhook; OpenRouter provides the LLM for the performance report. MySQL is wired up via Drizzle but not active in the demo phase.
+
 ---
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| **Runtime** | Node.js + TypeScript 5.9 |
-| **Frontend** | React 19, Vite 7, Wouter (routing) |
-| **Styling** | Tailwind CSS 4, Framer Motion |
-| **API Layer** | tRPC 11 (type-safe RPC) |
-| **State** | TanStack React Query + tRPC hooks |
-| **Backend** | Express 4 |
-| **Database** | MySQL 2 via Drizzle ORM |
-| **Serialization** | SuperJSON |
-| **AI/Automation** | n8n workflow (webhook-based) |
-| **Auth** | OAuth (cookie-based sessions via Jose JWT) |
+| Layer | Technology | Purpose |
+|-------|-----------|--------|
+| **Runtime** | Node.js 20 + TypeScript 5.9 | Server and type safety |
+| **Frontend** | React 19, Vite 7, Wouter | UI, bundling, client-side routing |
+| **Styling** | Tailwind CSS 4, Framer Motion | Utility styling, animations |
+| **API Layer** | tRPC 11 + SuperJSON | End-to-end type-safe RPC with rich serialization |
+| **Server State** | TanStack React Query | Caching, polling, mutations |
+| **Backend** | Express 4 | HTTP server, middleware |
+| **Database** | MySQL 2 via Drizzle ORM | Persistent storage (schema ready, in-memory for demo) |
+| **AI Workflows** | n8n (webhook) | Personalized question generation |
+| **AI Reports** | OpenRouter (`tencent/hy3-preview`) | Async answer quality analysis |
+| **Auth** | OAuth + Jose JWT | Cookie-based sessions |
 
 ---
 
@@ -121,7 +153,8 @@ Flayou3756/
 │   ├── inMemoryStore.ts       # In-memory session/data store
 │   ├── db.ts                  # Database queries (Drizzle)
 │   └── services/
-│       └── scoringService.ts  # Trust score + points calculation
+│       ├── scoringService.ts  # Trust score + points calculation
+│       └── answerAnalyzer.ts  # Async AI answer quality analysis (OpenRouter)
 ├── shared/                    # Shared types and constants
 ├── drizzle/                   # Database schema + migrations
 │   ├── schema.ts              # Table definitions
@@ -203,6 +236,7 @@ graph TD
     
     Router --> Analytics["analytics"]
     Analytics --> AnalyticsSnapshot["snapshot (query)"]
+    Analytics --> AnalyticsReport["report (query) 🤖"]
     
     Router --> Behavior["behavior"]
     Behavior --> BehaviorTrack["trackEvent (mutation)"]
@@ -226,10 +260,11 @@ graph TD
 | Endpoint | Type | Description |
 |----------|------|-------------|
 | `session.create` | mutation | Creates a new in-memory session, returns `sessionId` |
-| `missions.getNext` | query | Returns next question (AI-suggested if cached, else fetches from n8n, else mock fallback) |
+| `missions.getNext` | query | Returns next unseen question (AI-suggested if cached, else n8n, else mock fallback) |
 | `missions.getSuggested` | mutation | Fetches a batch of AI-suggested questions from the n8n workflow |
-| `submit.answer` | mutation | Records answer, calculates points + trust score, invalidates suggestion cache, fires snapshot to n8n |
+| `submit.answer` | mutation | Records answer, recalculates points + trust score, invalidates cache, fires n8n snapshot, triggers AI analysis |
 | `analytics.snapshot` | query | Returns the full behavioral snapshot for a session |
+| `analytics.report` | query | Returns the async AI performance report (status: none/pending/ready/error) |
 | `rewards.purchase` | mutation | Deducts points and records a reward purchase |
 | `wheel.spin` | mutation | Deducts spin cost, picks random prize, returns result with animation index |
 
@@ -420,7 +455,49 @@ The server parses `possible_answers` (split by `،` or `,`) and auto-detects que
 - **2 options** → `swipe` (binary choice)
 - **3+ options** → `choice` (multiple choice)
 
-**Fallback**: If the webhook is unavailable (timeout, error, invalid format), the server transparently falls back to local mock questions.
+**Fallback**: If the webhook is unavailable (timeout, error, invalid format), the server transparently falls back to local mock questions. Seen question IDs are tracked per session to prevent repetition.
+
+---
+
+### AI Performance Report
+
+`server/services/answerAnalyzer.ts` runs **asynchronously** after every answer submission (triggered at 5+ answers). It calls the OpenRouter API (`tencent/hy3-preview:free`) with all session answers and behavioral stats, and stores the result back in the in-memory store.
+
+```mermaid
+sequenceDiagram
+    participant S as tRPC Server
+    participant A as answerAnalyzer
+    participant OR as OpenRouter API
+    participant Store as InMemoryStore
+
+    S->>Store: setAIReport(sessionId, { status: "pending" })
+    S->>A: triggerAnswerAnalysis() [fire-and-forget]
+    
+    A->>OR: POST /v1/chat/completions (tencent/hy3-preview:free)
+    Note right of A: Sends all answers + behavioral stats
+    OR-->>A: JSON report in Tunisian Arabic
+    
+    A->>A: Parse JSON: score, summary, strengths, improvements
+    A->>Store: setAIReport(sessionId, { status: "ready", ... })
+    
+    Note over A,OR: If LLM fails → behavioral fallback
+    A->>A: generateFallbackReport() from raw metrics
+    A->>Store: setAIReport(sessionId, fallback)
+```
+
+**Report fields:**
+
+| Field | Description |
+|-------|-------------|
+| `overallScore` | 0–100 performance score |
+| `summary` | 2–3 sentence summary in Tunisian Arabic |
+| `strengths` | List of positive behavioral traits |
+| `improvements` | List of suggested improvements |
+| `engagementLevel` | عالي / متوسط / منخفض |
+| `answerDepth` | عميق / متوسط / سطحي |
+| `consistencyRating` | ثابت / متقلب / غير كافي |
+
+**Fallback behavior**: If OpenRouter returns an empty response or errors, `generateFallbackReport()` computes a score purely from behavioral metrics (avg response time, skip rate, open-ended answer length, trust score).
 
 ---
 
@@ -564,9 +641,9 @@ All pages are wrapped in `AnimatedRoute` which applies Framer Motion page transi
 | Route | Component | Description |
 |-------|-----------|-------------|
 | `/` | `Home` | Editorial hero with brand typography, CTA to start quiz, links to wheel and shop, behavioral insight teaser |
-| `/quiz` | `QuizPage` | Main quiz flow — fetches AI-suggested questions in batches, serves one at a time, shows reward animation, tracks progress (0/10) |
+| `/quiz` | `QuizPage` | Main quiz flow — fetches AI-suggested questions in batches, serves one at a time, shows reward + BejiAvatar animation, tracks progress (0/10). Shows 🤖 badge on AI-personalized questions |
 | `/marchi` | `ElMarchi` | Rewards marketplace — grid of purchasable items (Jumia, Glovo, Ooredoo, Netflix, Spotify vouchers), purchase confirmation overlay |
-| `/profile` | `ProfilePage` | User stats display — points, level, trust score with progress bar, activity metrics, logout |
+| `/profile` | `ProfilePage` | User stats (live from server), trust score bar, activity metrics, **AI Performance Report card** (polls `analytics.report` every 5s, shows pending spinner → full report) |
 | `/roue` | `RoueElHadh` | Wheel of Fortune — animated spinning wheel with 8 vibrant segments, spin history, cost/balance display |
 
 ---
@@ -601,12 +678,14 @@ graph TD
 
 The central interaction component. Renders differently based on `question.type`:
 
-- **`swipe`**: Two large tap buttons side by side (e.g., "Hamoud Frères" vs "Boga")
-- **`rating`**: 5 interactive stars with fill animation + submit button
-- **`choice`**: Vertical list of selectable options with active state highlight + submit button
-- **`open_ended`**: RTL textarea with placeholder + submit button
+| Type | UI | Interaction |
+|------|----|-------------|
+| `swipe` | Two large tap buttons side by side | Tap either option |
+| `rating` | 5 interactive stars with fill animation | Tap star → auto-submit |
+| `choice` | Vertical list of selectable options | Tap to select → Submit button |
+| `open_ended` | RTL textarea | Type answer → Submit button |
 
-All types track `responseTime` from mount to submission. Accepts an `isAISuggested` prop for visual differentiation.
+All types track `responseTime` from mount to submission. When `isAISuggested` is true, a 🤖 **"سؤال مخصص ليك"** badge appears in the header.
 
 #### WheelOfFortune
 
@@ -658,19 +737,19 @@ graph TD
 
 ### Localization
 
-All user-facing text is in Tunisian Arabic (Derja) via `client/src/locales/ar.ts`. The file exports a flat object tree covering:
+All user-facing text is in Tunisian Arabic (Derja) via `client/src/locales/ar.ts`. The app is RTL-first.
 
-- Common actions (loading, skip, confirm, cancel)
-- Home/onboarding copy
-- Quiz/mission labels
-- Shop (El Marchi) labels
-- Wheel (Rouet el Hadh) labels
-- Profile labels
-- Trust levels, difficulties, categories
-- Error messages
-- Button labels
+| Namespace | Contents |
+|-----------|----------|
+| Common | Loading, skip, confirm, cancel |
+| Home | Onboarding and hero copy |
+| Quiz | Mission labels, progress, reward messages |
+| Shop | El Marchi item labels, purchase flow |
+| Wheel | Rouet el Hadh spin labels, prize names |
+| Profile | Stats labels, trust levels, logout |
+| Errors | API and validation messages |
 
-RTL layout is supported throughout via `text-right` alignment and Arabic-first content ordering.
+RTL layout is enforced throughout via `dir="rtl"`, `text-right` alignment, and Arabic-first content ordering. The Cairo and Inter font families are loaded from Google Fonts for Arabic/Latin mixed rendering.
 
 ---
 
@@ -789,40 +868,50 @@ flowchart LR
 ### Prerequisites
 
 - Node.js 20+
-- pnpm 10+
+- npm 9+
+- An active [n8n](https://n8n.io) instance with the workflow configured and **activated**
+- (Optional) An [OpenRouter](https://openrouter.ai) API key for the AI performance report
 
 ### Install & Run
 
 ```bash
 # Install dependencies
-pnpm install
+npm install --legacy-peer-deps
 
-# Start development server (frontend + backend)
+# Copy and fill in environment variables
+copy .env.example .env
+# Edit .env with your values
+
+# Start development server (frontend + backend on :3000)
 npm run dev
+```
 
-# Open in browser
-# → http://localhost:3000
+### n8n Setup
+
+1. Import the workflow into your n8n instance
+2. Set the **Webhook node** to accept **POST** requests
+3. **Activate** the workflow (toggle in the top-right — test mode won't work)
+4. Copy the production webhook URL into `N8N_WORKFLOW_URL` in `.env`
+5. If using ngrok, ensure the tunnel is running and the URL hasn't changed
+
+The workflow must return:
+```json
+{ "suggested_questions": [ { "question": "...", "possible_answers": "A، B، C", "difficulty": "easy", "topic": "...", "xp_reward": 15 } ] }
 ```
 
 ### Other Commands
 
 ```bash
-# Type check
+# Type check (no emit)
 npm run check
 
-# Run tests
-npm run test
-
-# Format code
-npm run format
-
-# Build for production
+# Build for production (Vite + esbuild server bundle)
 npm run build
 
 # Start production server
 npm run start
 
-# Generate + run database migrations
+# Push Drizzle schema to MySQL (when DATABASE_URL is set)
 npm run db:push
 ```
 
@@ -832,7 +921,8 @@ npm run db:push
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `N8N_WORKFLOW_URL` | Yes | n8n webhook URL for AI question generation |
+| `N8N_WORKFLOW_URL` | **Yes** | n8n production webhook URL for AI question generation |
+| `OPENROUTER_API_KEY` | Recommended | OpenRouter API key for the AI performance report (`tencent/hy3-preview:free`) |
 | `DATABASE_URL` | No | MySQL connection string (falls back to in-memory store) |
 | `JWT_SECRET` | No | Secret for session cookie signing |
 | `OAUTH_SERVER_URL` | No | OAuth provider URL |
@@ -841,8 +931,35 @@ npm run db:push
 
 ```env
 # .env
-N8N_WORKFLOW_URL=https://your-n8n-instance.com/webhook/<webhook-id>
+N8N_WORKFLOW_URL=https://your-ngrok-or-n8n-url/webhook/<webhook-id>
+OPENROUTER_API_KEY=sk-or-v1-your-key-here
 DATABASE_URL=mysql://user:pass@host:3306/dbname
+JWT_SECRET=your-secret
 ```
 
-> **Note**: The n8n webhook must be configured to accept **POST** requests. Ensure the workflow is **activated** (not just in test mode) for the production URL to work.
+> **Note**: The n8n webhook must be set to **POST** and the workflow must be **Activated** (not just in test mode). Free ngrok URLs change on restart — update `N8N_WORKFLOW_URL` accordingly.
+
+---
+
+## Contributing
+
+### Branch Strategy
+
+- `main` — stable, production-ready
+- Feature branches → PR to `main`
+- Merge conflicts must be resolved manually (especially `QuizPage.tsx` and `routers.ts` which are frequently edited)
+
+### Known Limitations (Demo Phase)
+
+- **In-memory store**: all session data is lost on server restart — intended for demo/hackathon use
+- **No-repeat questions**: tracked per session in memory; resets on restart
+- **n8n timeout**: the app allows up to 120 seconds for the n8n workflow (which calls an AI model internally). If your workflow is slower, increase the timeout in `server/routers.ts`
+- **AI report fallback**: if OpenRouter returns an empty response (rate limit, model issue), the app falls back to a behavioral heuristic report
+
+### Roadmap
+
+- [ ] Migrate from in-memory store to MySQL (Drizzle schema is ready)
+- [ ] Add more question types (image-based, video clips)
+- [ ] Improve AI report with multi-session history
+- [ ] Add admin dashboard for question and reward management
+- [ ] Leaderboard and social features
