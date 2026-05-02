@@ -11,6 +11,7 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    environment: secrets   # required for your setup
 
     steps:
       - name: Checkout
@@ -33,5 +34,3 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/aam-elbeji:${{ github.event.inputs.tag }}
             ${{ secrets.DOCKERHUB_USERNAME }}/aam-elbeji:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
