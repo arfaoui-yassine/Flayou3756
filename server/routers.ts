@@ -239,11 +239,24 @@ const sendWorkflowSnapshot = async (snapshot: WorkflowSnapshot) => {
 };
 
 /**
- * Get a fallback mock question formatted as a SuggestedQuestion.
+ * Get fallback mock questions that the user hasn't seen yet.
  */
-const getFallbackMockQuestion = (): SuggestedQuestion => {
-  const q = getRandomMockQuestion();
-  return {
+const getUnseenMockQuestions = (sessionId: string, count: number): SuggestedQuestion[] => {
+  // Get IDs of questions already answered in this session
+  const answeredIds = new Set(
+    inMemoryStore.getAnswers(sessionId).map(a => a.questionId)
+  );
+
+  // Filter and shuffle remaining questions
+  const unseen = mockQuestions
+    .filter(q => !answeredIds.has(q.id))
+    .sort(() => 0.5 - Math.random())
+    .slice(0, count);
+
+  // If all questions have been seen, reshuffle the full pool
+  const pool = unseen.length > 0 ? unseen : [...mockQuestions].sort(() => 0.5 - Math.random()).slice(0, count);
+
+  return pool.map(q => ({
     id: q.id,
     type: q.type,
     text: q.textAr,
@@ -251,7 +264,7 @@ const getFallbackMockQuestion = (): SuggestedQuestion => {
     difficulty: q.difficulty,
     pointsValue: q.pointsValue,
     isAISuggested: false,
-  };
+  }));
 };
 
 export const appRouter = router({
@@ -309,8 +322,9 @@ export const appRouter = router({
           }
         }
 
-        // Fallback to mock question
-        return getFallbackMockQuestion();
+        // Fallback to unseen mock question
+        const unseen = getUnseenMockQuestions(input.sessionId, 1);
+        return unseen[0] ?? getUnseenMockQuestions(input.sessionId, 1)[0];
       }),
 
     getSuggested: publicProcedure
@@ -342,8 +356,8 @@ export const appRouter = router({
           };
         }
 
-        // Fallback to mock questions
-        const fallback = Array.from({ length: 5 }, () => getFallbackMockQuestion());
+        // Fallback to unseen mock questions
+        const fallback = getUnseenMockQuestions(input.sessionId, 5);
         return {
           questions: fallback,
           source: "fallback" as const,
@@ -352,8 +366,8 @@ export const appRouter = router({
       }),
 
     getAll: publicProcedure.query(async () => {
-      const questions = [getRandomMockQuestion(), getRandomMockQuestion(), getRandomMockQuestion()];
-      return questions.map(q => ({
+      const shuffled = [...mockQuestions].sort(() => 0.5 - Math.random()).slice(0, 3);
+      return shuffled.map(q => ({
         id: q.id,
         type: q.type,
         text: q.textAr,
