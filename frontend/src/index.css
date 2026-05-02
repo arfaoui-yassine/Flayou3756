@@ -1,0 +1,96 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-serif: "Playfair Display", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+}
+
+body {
+  background-color: #FAF9F6;
+  color: #1C1C1C;
+}
+
+/* Custom scrollbar for webkit */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent; 
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(28, 28, 28, 0.1); 
+  border-radius: 0;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(28, 28, 28, 0.3); 
+}
+
+.markdown-body {
+  @apply text-[#1C1C1C]/90 leading-relaxed font-sans;
+}
+
+.markdown-body p {
+  @apply mb-4 text-base;
+}
+
+.markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4 {
+  @apply text-[#1C1C1C] font-serif font-bold mb-4 mt-8 leading-tight;
+}
+
+.markdown-body h1 { @apply text-3xl; }
+.markdown-body h2 { 
+  @apply text-2xl border-b-2 border-[#C4342D] pb-2 mb-6;
+}
+.markdown-body h3 { @apply text-xl; }
+
+.markdown-body ul {
+  @apply list-none mb-4 pl-0 space-y-2;
+}
+
+.markdown-body ul li {
+  @apply relative pl-6 text-base;
+}
+
+.markdown-body ul li::before {
+  content: "";
+  @apply absolute left-0 top-[0.65em] w-2 h-2 bg-[#C4342D] rounded-full;
+}
+
+.markdown-body ol {
+  @apply list-decimal list-outside mb-4 pl-6 space-y-2;
+}
+
+.markdown-body strong {
+  @apply text-[#1C1C1C] font-bold;
+}
+
+.markdown-body em {
+  @apply text-[#C4342D] not-italic font-semibold;
+}
+
+.markdown-body blockquote {
+  @apply border-l-4 border-[#C4342D] pl-6 italic text-[#1C1C1C]/70 py-2 my-6 font-serif text-lg bg-gray-50 pr-4 rounded-r;
+}
+
+.markdown-body code {
+  @apply bg-gray-100 text-[#C4342D] px-2 py-0.5 rounded text-sm font-mono;
+}
+
+.markdown-body pre {
+  @apply bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto my-4;
+}
+
+.markdown-body pre code {
+  @apply bg-transparent text-gray-100 p-0;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
