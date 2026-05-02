@@ -1,11 +1,9 @@
-# شنوا رايك؟ — Chnouwa Rayek?
+#Aam Beji
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6?style=flat-square&logo=typescript&logoColor=white)
 ![React](https://img.shields.io/badge/React-19-61dafb?style=flat-square&logo=react&logoColor=black)
 ![tRPC](https://img.shields.io/badge/tRPC-11-2596be?style=flat-square)
 ![n8n](https://img.shields.io/badge/n8n-AI%20Workflow-ea4b71?style=flat-square&logo=n8n&logoColor=white)
-
-> **"شنوا رايك؟"** means *"What's your opinion?"* in Tunisian Arabic.
 
 A mobile-first behavioral intelligence platform for the Tunisian market. Users answer personalized micro-survey questions in Tunisian Arabic (Derja), earn points, and unlock rewards, while an AI-powered n8n workflow adapts future questions to each user's behavior profile in real time.
 ---
