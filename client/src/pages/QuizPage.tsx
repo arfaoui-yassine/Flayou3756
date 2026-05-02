@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { QuestionCard } from "@/components/QuestionCard";
+import { BejiAvatar } from "@/components/BejiAvatar";
 import { trpc } from "@/lib/trpc";
 import { ar } from "@/locales/ar";
 
@@ -20,12 +21,25 @@ export default function QuizPage() {
   const [trustScore, setTrustScore] = useState(45);
   const [questionsAnswered, setQuestionsAnswered] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [showReward, setShowReward] = useState(false);
-  const [lastReward, setLastReward] = useState<{ points: number; trustScore: number } | null>(null);
+
+  // Merged reward state: appreciation + score in one screen
+  const [rewardPhase, setRewardPhase] = useState<null | "showing">(null);
+  const [lastEarned, setLastEarned] = useState(0);
 
   const submitAnswerMutation = trpc.submit.answer.useMutation();
   const trackEventMutation = trpc.behavior.trackEvent.useMutation();
   const createSessionMutation = trpc.session.create.useMutation();
+
+  // Lock body scroll
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+      document.documentElement.style.overflow = "";
+    };
+  }, []);
 
   // Initialize session
   useEffect(() => {
@@ -43,7 +57,6 @@ export default function QuizPage() {
         }
       }
     };
-
     initSession();
   }, []);
 
@@ -60,21 +73,32 @@ export default function QuizPage() {
             type: "swipe",
             text: "أنهي براند تفضل؟",
             options: [
-              { id: "opt1", label: "Hamoud Frères", labelAr: "حمود فريرز" },
-              { id: "opt2", label: "Boga", labelAr: "بوقة" },
+              { id: "opt1", label: "Boga", labelAr: "بوقة", imageUrl: "/assets/brands/boga.png" },
+              { id: "opt2", label: "Fanta", labelAr: "فانتا", imageUrl: "/assets/brands/fanta.png" },
             ],
             difficulty: "easy",
             pointsValue: 10,
           },
           {
             id: "q2",
+            type: "swipe",
+            text: "أنهي شراب تختار؟",
+            options: [
+              { id: "opt1", label: "Hamoud", labelAr: "حمود", imageUrl: "/assets/brands/hamoud.png" },
+              { id: "opt2", label: "Coca-Cola", labelAr: "كوكا كولا", imageUrl: "/assets/brands/coca.png" },
+            ],
+            difficulty: "easy",
+            pointsValue: 10,
+          },
+          {
+            id: "q3",
             type: "rating",
             text: "قيّم رضاك عن جوميا",
             difficulty: "easy",
             pointsValue: 10,
           },
           {
-            id: "q3",
+            id: "q4",
             type: "choice",
             text: "أنهي منصة تسوق تفضل؟",
             options: [
@@ -86,7 +110,7 @@ export default function QuizPage() {
             pointsValue: 15,
           },
           {
-            id: "q4",
+            id: "q5",
             type: "open_ended",
             text: "أنهي فئة منتجات تفضل؟",
             difficulty: "medium",
@@ -103,10 +127,10 @@ export default function QuizPage() {
       }
     };
 
-    if (sessionId && !currentQuestion) {
+    if (sessionId && !currentQuestion && !rewardPhase) {
       loadQuestion();
     }
-  }, [sessionId, currentQuestion]);
+  }, [sessionId, currentQuestion, rewardPhase]);
 
   const handleAnswer = async (answer: string, responseTime: number) => {
     if (!sessionId || !currentQuestion) return;
@@ -121,27 +145,25 @@ export default function QuizPage() {
         wasSkipped: false,
       });
 
-      // Phase 1: Stop loading — QuestionCard shows "grateful" Beji
       setIsLoading(false);
 
-      // Let the user see Beji's grateful reaction for 2 seconds
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Phase 2: Show points reward
-      setLastReward({
-        points: result.pointsEarned,
-        trustScore: result.newTrustScore,
-      });
-      setShowReward(true);
+      // Single merged reward screen: appreciation + score together
+      setLastEarned(result.pointsEarned);
       setPoints(result.totalPoints);
       setTrustScore(result.newTrustScore);
-      setQuestionsAnswered(questionsAnswered + 1);
+      setQuestionsAnswered(prev => prev + 1);
 
-      // Phase 3: After 2s, move to next question
+      // Quick pause to let the card's speech bubble show (0.8s)
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      // Show merged reward screen
+      setRewardPhase("showing");
+      setCurrentQuestion(null);
+
+      // Auto-advance to next question after 2.5s
       setTimeout(() => {
-        setCurrentQuestion(null);
-        setShowReward(false);
-      }, 2000);
+        setRewardPhase(null);
+      }, 2500);
     } catch (error) {
       console.error("Failed to submit answer:", error);
       setIsLoading(false);
@@ -168,9 +190,9 @@ export default function QuizPage() {
   const progress = (questionsAnswered / 10) * 100;
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Progress — Thin line at very top */}
-      <div className="h-[2px] bg-[#1A1A1A] w-full">
+    <div className="h-screen overflow-hidden flex flex-col">
+      {/* Progress bar */}
+      <div className="h-[2px] bg-[#1A1A1A] w-full flex-shrink-0">
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${progress}%` }}
@@ -180,7 +202,7 @@ export default function QuizPage() {
       </div>
 
       {/* Question counter */}
-      <div className="flex justify-between items-center px-5 py-4 max-w-md mx-auto w-full">
+      <div className="flex justify-between items-center px-5 py-3 max-w-lg mx-auto w-full flex-shrink-0">
         <span className="text-[#555] text-xs font-medium tracking-wide">
           {questionsAnswered}/10
         </span>
@@ -189,70 +211,107 @@ export default function QuizPage() {
         </span>
       </div>
 
-      {/* Main content — centered */}
-      <div className="flex-1 flex items-center justify-center px-5 py-8">
+      {/* Main content — centered, no scroll */}
+      <div className="flex-1 flex items-center justify-center px-4">
         <AnimatePresence mode="wait">
-          {currentQuestion && !showReward && (
-            <div key={currentQuestion.id}>
+
+          {/* Question Card */}
+          {currentQuestion && !rewardPhase && (
+            <motion.div
+              key={currentQuestion.id}
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -30 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="w-full"
+            >
               <QuestionCard
                 question={currentQuestion}
                 onAnswer={handleAnswer}
                 onSkip={handleSkip}
                 isLoading={isLoading}
               />
-            </div>
+            </motion.div>
           )}
-        </AnimatePresence>
 
-        {/* Reward — Simple text fade */}
-        <AnimatePresence>
-          {showReward && lastReward && (
+          {/* Merged Reward Screen: Beji grateful + Score */}
+          {rewardPhase === "showing" && (
             <motion.div
+              key="reward"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
+              className="w-full flex flex-col items-center text-center gap-4"
+            >
+              <BejiAvatar mode="grateful" size="lg" />
+
+              <motion.div
+                initial={{ y: 8, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.15 }}
+              >
+                <p className="text-[#ED1C24] text-4xl sm:text-5xl font-black mb-1">
+                  +{lastEarned}
+                </p>
+                <p className="text-white text-sm font-bold mb-1">شكراً على جوابك!</p>
+                <p className="text-[#555] text-xs">
+                  رصيدك: {points} نقطة
+                </p>
+              </motion.div>
+
+              {/* Auto-progress indicator */}
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: "100%" }}
+                transition={{ duration: 2.5, ease: "linear" }}
+                className="h-[2px] bg-[#ED1C24]/40 mt-4 max-w-[120px]"
+              />
+            </motion.div>
+          )}
+
+          {/* Loading between questions */}
+          {isLoading && !currentQuestion && !rewardPhase && (
+            <motion.div
+              key="loading"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="text-center"
             >
-              <p className="text-[#ED1C24] text-5xl font-bold mb-3">
-                +{lastReward.points}
-              </p>
-              <p className="text-[#888] text-sm">{ar.mission.thankYou}</p>
+              <div className="w-6 h-6 border-2 border-[#333] border-t-[#ED1C24] rounded-full animate-spin mx-auto mb-3" />
+              <p className="text-[#555] text-xs">{ar.loading}</p>
             </motion.div>
           )}
-        </AnimatePresence>
 
-        {/* Loading State */}
-        {isLoading && !currentQuestion && !showReward && (
-          <div className="text-center">
-            <div className="w-8 h-8 border-2 border-[#333] border-t-[#ED1C24] rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-[#555] text-sm">{ar.loading}</p>
-          </div>
-        )}
-
-        {/* Completion */}
-        {questionsAnswered >= 10 && !currentQuestion && !showReward && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center max-w-sm mx-auto"
-          >
-            <p className="label-red mb-4">Mission Complete</p>
-            <h2 className="text-4xl font-bold text-white mb-4">مبروك!</h2>
-            <p className="text-[#888] mb-8">أكملت جميع الأسئلة بنجاح</p>
-
-            <div className="border border-[#222] py-6 px-8 mb-8">
-              <p className="text-[#555] text-xs uppercase tracking-widest mb-2">إجمالي النقاط</p>
-              <p className="text-white text-5xl font-bold">{points}</p>
-            </div>
-
-            <button
-              onClick={() => (window.location.href = "/")}
-              className="w-full bg-[#ED1C24] hover:bg-[#D91920] text-white font-semibold py-4 transition-colors"
+          {/* Completion */}
+          {questionsAnswered >= 10 && !currentQuestion && !rewardPhase && (
+            <motion.div
+              key="complete"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center max-w-sm mx-auto w-full"
             >
-              {ar.buttons.goHome}
-            </button>
-          </motion.div>
-        )}
+              <BejiAvatar mode="grateful" size="lg" className="mx-auto mb-4" />
+              <p className="label-red mb-3">Mission Complete</p>
+              <h2 className="text-3xl font-bold text-white mb-3">مبروك!</h2>
+              <p className="text-[#888] text-sm mb-6">أكملت جميع الأسئلة بنجاح</p>
+
+              <div className="border border-[#222] py-5 px-6 mb-6">
+                <p className="text-[#555] text-xs uppercase tracking-widest mb-1">إجمالي النقاط</p>
+                <p className="text-white text-4xl font-bold">{points}</p>
+              </div>
+
+              <button
+                onClick={() => (window.location.href = "/")}
+                className="w-full bg-[#ED1C24] hover:bg-[#D91920] text-white font-semibold py-3.5 transition-colors text-sm"
+              >
+                {ar.buttons.goHome}
+              </button>
+            </motion.div>
+          )}
+
+        </AnimatePresence>
       </div>
     </div>
   );

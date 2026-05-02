@@ -1,14 +1,15 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, ThumbsUp, ThumbsDown, Send } from "lucide-react";
+import { Star, Send } from "lucide-react";
 import { ar } from "@/locales/ar";
 import { BejiAvatar, BejiMode } from "./BejiAvatar";
+import { SwipeChoice } from "./SwipeChoice";
 
 export interface Question {
   id: string;
   type: "swipe" | "rating" | "choice" | "open_ended";
   text: string;
-  options?: Array<{ id: string; label: string; labelAr: string }>;
+  options?: Array<{ id: string; label: string; labelAr: string; imageUrl?: string }>;
   difficulty: string;
   pointsValue: number;
 }
@@ -20,9 +21,15 @@ interface QuestionCardProps {
   isLoading?: boolean;
 }
 
-function getBejiMode(type: Question["type"], isLoading: boolean, hasAnswered: boolean): BejiMode {
+const APPRECIATION_PHRASES = [
+  "يعيشك خويا!",
+  "بركا الله فيك!",
+  "تو نحسبوهالك",
+  "أحسنت!",
+];
+
+function getBejiMode(type: Question["type"], hasAnswered: boolean): BejiMode {
   if (hasAnswered) return "grateful";
-  if (isLoading) return "writing";
   switch (type) {
     case "rating": return "thinking";
     case "choice": return "pointing";
@@ -38,8 +45,11 @@ export function QuestionCard({ question, onAnswer, onSkip, isLoading = false }: 
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [openEndedAnswer, setOpenEndedAnswer] = useState("");
   const [hasAnswered, setHasAnswered] = useState(false);
+  const [appreciationPhrase] = useState(
+    () => APPRECIATION_PHRASES[Math.floor(Math.random() * APPRECIATION_PHRASES.length)]
+  );
 
-  const bejiMode = getBejiMode(question.type, isLoading, hasAnswered);
+  const bejiMode = getBejiMode(question.type, hasAnswered);
 
   const handleAnswerClick = (answer: string) => {
     setHasAnswered(true);
@@ -54,86 +64,59 @@ export function QuestionCard({ question, onAnswer, onSkip, isLoading = false }: 
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto px-4">
-      {/* 
-        Outer wrapper — overflow-visible so Beji can break out.
-        Position relative to anchor the absolute Beji.
-      */}
+    <div className="w-full max-w-lg mx-auto px-4">
       <div className="relative" style={{ overflow: "visible" }}>
 
-        {/* BEJI — Breaking out from the top-left corner */}
+        {/* BEJI + Speech Bubble Container */}
         <div
-          className="absolute z-30"
-          style={{
-            top: "-160px",
-            left: "-10px",
-          }}
+          className="absolute z-30 flex items-start gap-1"
+          style={{ top: "-120px", right: "auto", left: "-10px" }}
         >
-          <BejiAvatar mode={bejiMode} size="xl" />
+          <BejiAvatar mode={bejiMode} size="lg" />
+
+          {/* Speech bubble — closer to Beji */}
+          <AnimatePresence>
+            {hasAnswered && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ delay: 0.2 }}
+                className="mt-2 whitespace-nowrap bg-white text-black text-xs font-black px-3 py-1.5 rounded-lg shadow-lg relative"
+              >
+                {appreciationPhrase}
+                {/* Triangle pointer pointing left toward Beji */}
+                <div className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-0 h-0 border-t-[5px] border-t-transparent border-b-[5px] border-b-transparent border-l-[6px] border-l-white" />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* The Question Card */}
         <div className="relative bg-[#0A0A0A]/90 border border-white/5 shadow-2xl">
 
-          {/* Question Text — offset right to make room for Beji */}
-          <div className="pr-6 pl-48 sm:pl-56 pt-8 pb-4">
-            <h2 className="text-xl sm:text-2xl font-black text-white leading-tight">
+          {/* Question Text */}
+          <div className="px-6 pt-6 pb-2">
+            <h2 className="text-lg sm:text-xl font-black text-white leading-tight text-center">
               {question.text}
             </h2>
           </div>
 
-          {/* Loading Overlay */}
-          <AnimatePresence>
-            {isLoading && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-black/70 backdrop-blur-sm z-40 flex flex-col items-center justify-center gap-3"
-              >
-                <div className="flex gap-2">
-                  {[0, 1, 2].map(i => (
-                    <motion.div
-                      key={i}
-                      animate={{ y: [0, -8, 0] }}
-                      transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.12 }}
-                      className="w-2.5 h-2.5 bg-[#ED1C24] rounded-full"
-                    />
-                  ))}
-                </div>
-                <p className="text-white/80 font-bold text-sm">نقراو إجابتك ...</p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Success / Appreciation Overlay */}
-          <AnimatePresence>
-            {hasAnswered && !isLoading && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-[#0A0A0A] z-50 flex flex-col items-center justify-center text-center p-8"
-              >
-                <motion.div
-                  initial={{ y: 10, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.1 }}
-                >
-                  <p className="text-[#ED1C24] text-xs uppercase tracking-[0.2em] font-black mb-2">Excellent</p>
-                  <h3 className="text-3xl font-black text-white mb-2">شكراً على جوابك!</h3>
-                  <p className="text-[#555] text-sm">قاعدين نحسبو في نقاطك...</p>
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
           {/* Interaction Zone */}
-          <div className="px-6 pb-6">
+          <div className="px-4 pb-4">
+
+            {/* Swipe — Brand Cards */}
+            {question.type === "swipe" && question.options && question.options.length >= 2 && (
+              <SwipeChoice
+                options={[question.options[0], question.options[1]]}
+                onChoice={(id) => handleAnswerClick(id)}
+                disabled={isLoading || hasAnswered}
+              />
+            )}
 
             {/* Rating — Stars */}
             {question.type === "rating" && (
-              <div className="flex gap-3 justify-center py-4">
+              <div className="flex gap-3 justify-center py-3">
                 {[1, 2, 3, 4, 5].map(star => (
                   <motion.button
                     key={star}
@@ -142,11 +125,11 @@ export function QuestionCard({ question, onAnswer, onSkip, isLoading = false }: 
                       setRating(star);
                       handleAnswerClick(star.toString());
                     }}
-                    disabled={isLoading}
+                    disabled={isLoading || hasAnswered}
                     className="p-1"
                   >
                     <Star
-                      size={36}
+                      size={32}
                       className={`transition-all duration-200 ${star <= rating
                         ? "fill-[#ED1C24] text-[#ED1C24]"
                         : "text-[#333] hover:text-[#555]"
@@ -159,7 +142,7 @@ export function QuestionCard({ question, onAnswer, onSkip, isLoading = false }: 
 
             {/* Choices — Horizontal Pills */}
             {question.type === "choice" && question.options && (
-              <div className="flex flex-wrap gap-3 py-4">
+              <div className="flex flex-wrap gap-2 py-3 justify-center">
                 {question.options.map(option => (
                   <motion.button
                     key={option.id}
@@ -168,8 +151,8 @@ export function QuestionCard({ question, onAnswer, onSkip, isLoading = false }: 
                       setSelectedOption(option.id);
                       handleAnswerClick(option.id);
                     }}
-                    disabled={isLoading}
-                    className={`py-3 px-6 rounded-full border text-sm font-bold transition-all ${selectedOption === option.id
+                    disabled={isLoading || hasAnswered}
+                    className={`py-2.5 px-5 rounded-full border text-sm font-bold transition-all ${selectedOption === option.id
                       ? "border-[#ED1C24] bg-[#ED1C24] text-white"
                       : "border-[#222] text-[#888] hover:border-[#444] hover:text-white"
                       }`}
@@ -180,48 +163,24 @@ export function QuestionCard({ question, onAnswer, onSkip, isLoading = false }: 
               </div>
             )}
 
-            {/* Swipe / Binary — Thumbs */}
-            {question.type === "swipe" && question.options && (
-              <div className="flex gap-3 py-4">
-                <motion.button
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => handleAnswerClick(question.options![0].id)}
-                  disabled={isLoading}
-                  className="group flex-1 flex items-center justify-center gap-3 bg-[#111] border border-[#222] hover:border-[#ED1C24]/50 py-4 transition-all"
-                >
-                  <ThumbsUp className="w-5 h-5 text-[#888] group-hover:text-white" />
-                  <span className="text-white font-bold">{question.options[0].labelAr}</span>
-                </motion.button>
-                <motion.button
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => handleAnswerClick(question.options![1].id)}
-                  disabled={isLoading}
-                  className="group flex-1 flex items-center justify-center gap-3 bg-[#111] border border-[#222] hover:border-[#444] py-4 transition-all"
-                >
-                  <ThumbsDown className="w-5 h-5 text-[#888] group-hover:text-white" />
-                  <span className="text-white font-bold">{question.options[1].labelAr}</span>
-                </motion.button>
-              </div>
-            )}
-
             {/* Open Ended — Input */}
             {question.type === "open_ended" && (
-              <div className="relative flex items-center w-full py-4">
+              <div className="relative flex items-center w-full py-3">
                 <input
                   type="text"
                   value={openEndedAnswer}
                   onChange={e => setOpenEndedAnswer(e.target.value)}
                   placeholder="اكتب هنا ..."
-                  disabled={isLoading}
-                  className="w-full bg-[#111] border border-[#222] focus:border-[#ED1C24] py-4 pr-5 pl-14 text-white outline-none transition-all font-bold placeholder:text-[#333] text-right"
+                  disabled={isLoading || hasAnswered}
+                  className="w-full bg-[#111] border border-[#222] focus:border-[#ED1C24] py-3.5 pr-4 pl-12 text-white outline-none transition-all font-bold placeholder:text-[#333] text-right text-sm"
                   onKeyDown={e => e.key === "Enter" && handleOpenEndedSubmit()}
                 />
                 <button
                   onClick={handleOpenEndedSubmit}
-                  disabled={!openEndedAnswer.trim() || isLoading}
-                  className="absolute left-4 text-[#ED1C24] disabled:text-[#333] transition-colors"
+                  disabled={!openEndedAnswer.trim() || isLoading || hasAnswered}
+                  className="absolute left-3 text-[#ED1C24] disabled:text-[#333] transition-colors"
                 >
-                  <Send className="w-5 h-5" />
+                  <Send className="w-4 h-4" />
                 </button>
               </div>
             )}
@@ -230,11 +189,10 @@ export function QuestionCard({ question, onAnswer, onSkip, isLoading = false }: 
       </div>
 
       {/* Skip */}
-      <div className="mt-8 flex justify-between items-center px-1">
-        <p className="text-[#222] text-[10px] uppercase tracking-widest font-black">Powered by AI Analytics</p>
+      <div className="mt-4 flex justify-end px-1">
         <button
           onClick={onSkip}
-          disabled={isLoading}
+          disabled={isLoading || hasAnswered}
           className="text-[#333] text-xs font-bold hover:text-[#666] transition-colors uppercase tracking-widest"
         >
           {ar.mission.skip}
