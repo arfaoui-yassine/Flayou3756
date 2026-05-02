@@ -10,6 +10,7 @@ import { inMemoryStore } from "./inMemoryStore";
 import type { SuggestedQuestion } from "./inMemoryStore";
 import type { BehaviorData } from "./services/scoringService";
 import { ENV } from "./_core/env";
+import { triggerAnswerAnalysis } from "./services/answerAnalyzer";
 
 type WorkflowSnapshot = {
   user_id: string;
@@ -238,11 +239,24 @@ const sendWorkflowSnapshot = async (snapshot: WorkflowSnapshot) => {
 };
 
 /**
- * Get a fallback mock question formatted as a SuggestedQuestion.
+ * Get fallback mock questions that the user hasn't seen yet.
  */
-const getFallbackMockQuestion = (): SuggestedQuestion => {
-  const q = getRandomMockQuestion();
-  return {
+const getUnseenMockQuestions = (sessionId: string, count: number): SuggestedQuestion[] => {
+  // Get IDs of questions already answered in this session
+  const answeredIds = new Set(
+    inMemoryStore.getAnswers(sessionId).map(a => a.questionId)
+  );
+
+  // Filter and shuffle remaining questions
+  const unseen = mockQuestions
+    .filter(q => !answeredIds.has(q.id))
+    .sort(() => 0.5 - Math.random())
+    .slice(0, count);
+
+  // If all questions have been seen, reshuffle the full pool
+  const pool = unseen.length > 0 ? unseen : [...mockQuestions].sort(() => 0.5 - Math.random()).slice(0, count);
+
+  return pool.map(q => ({
     id: q.id,
     type: q.type,
     text: q.textAr,
@@ -250,7 +264,7 @@ const getFallbackMockQuestion = (): SuggestedQuestion => {
     difficulty: q.difficulty,
     pointsValue: q.pointsValue,
     isAISuggested: false,
-  };
+  }));
 };
 
 export const appRouter = router({
@@ -308,8 +322,9 @@ export const appRouter = router({
           }
         }
 
-        // Fallback to mock question
-        return getFallbackMockQuestion();
+        // Fallback to unseen mock question
+        const unseen = getUnseenMockQuestions(input.sessionId, 1);
+        return unseen[0] ?? getUnseenMockQuestions(input.sessionId, 1)[0];
       }),
 
     getSuggested: publicProcedure
@@ -341,8 +356,8 @@ export const appRouter = router({
           };
         }
 
-        // Fallback to mock questions
-        const fallback = Array.from({ length: 5 }, () => getFallbackMockQuestion());
+        // Fallback to unseen mock questions
+        const fallback = getUnseenMockQuestions(input.sessionId, 5);
         return {
           questions: fallback,
           source: "fallback" as const,
@@ -351,8 +366,8 @@ export const appRouter = router({
       }),
 
     getAll: publicProcedure.query(async () => {
-      const questions = [getRandomMockQuestion(), getRandomMockQuestion(), getRandomMockQuestion()];
-      return questions.map(q => ({
+      const shuffled = [...mockQuestions].sort(() => 0.5 - Math.random()).slice(0, 3);
+      return shuffled.map(q => ({
         id: q.id,
         type: q.type,
         text: q.textAr,
@@ -433,6 +448,26 @@ export const appRouter = router({
 
         void sendWorkflowSnapshot(snapshot);
 
+        // Trigger async AI analysis after 5+ answers
+        if (answers.length >= 5) {
+          const answersForAnalysis = answers.map(a => {
+            const question = getQuestionById(a.questionId);
+            return {
+              questionId: a.questionId,
+              questionText: question?.textAr ?? a.questionId,
+              questionType: question?.type ?? "unknown",
+              answer: a.answer,
+              responseTime: a.responseTime,
+              wasSkipped: a.wasSkipped,
+            };
+          });
+          triggerAnswerAnalysis(input.sessionId, answersForAnalysis, {
+            trustScore: newTrustScore,
+            points: newPoints,
+            questionsAnswered: answers.length,
+          });
+        }
+
         return {
           pointsEarned,
           totalPoints: newPoints,
@@ -457,6 +492,29 @@ export const appRouter = router({
           points: session.points,
           userId: ctx.user?.openId ?? null,
         });
+      }),
+
+    // AI Performance Report
+    report: publicProcedure
+      .input(z.object({ sessionId: z.string() }))
+      .query(async ({ input }) => {
+        const session = inMemoryStore.getSession(input.sessionId);
+        if (!session) {
+          return {
+            status: "none" as const,
+            message: "ابدأ بالإجابة على الأسئلة باش تحصل على تقرير AI.",
+          };
+        }
+
+        const report = inMemoryStore.getAIReport(input.sessionId);
+        if (!report) {
+          return {
+            status: "none" as const,
+            message: "لازم تجاوب على 5 أسئلة على الأقل باش تحصل على تقرير.",
+          };
+        }
+
+        return report;
       }),
   }),
 

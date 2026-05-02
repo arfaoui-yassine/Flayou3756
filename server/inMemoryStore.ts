@@ -70,6 +70,19 @@ interface SuggestedQuestionsCache {
   fetchedAt: Date;
 }
 
+export interface AIPerformanceReport {
+  status: "pending" | "ready" | "error";
+  generatedAt?: Date;
+  overallScore?: number;
+  summary?: string;
+  strengths?: string[];
+  improvements?: string[];
+  engagementLevel?: string;
+  answerDepth?: string;
+  consistencyRating?: string;
+  error?: string;
+}
+
 class InMemoryStore {
   private sessions: Map<string, InMemorySession> = new Map();
   private answers: Map<string, InMemoryAnswer[]> = new Map();
@@ -77,6 +90,7 @@ class InMemoryStore {
   private purchases: Map<string, InMemoryPurchase[]> = new Map();
   private wheelSpins: Map<string, InMemoryWheelSpin[]> = new Map();
   private suggestedQuestions: Map<string, SuggestedQuestionsCache> = new Map();
+  private aiReports: Map<string, AIPerformanceReport> = new Map();
 
   // Session Management
   createSession(sessionId: string): InMemorySession {
@@ -217,6 +231,15 @@ class InMemoryStore {
     this.suggestedQuestions.delete(sessionId);
   }
 
+  // AI Performance Report
+  setAIReport(sessionId: string, report: AIPerformanceReport): void {
+    this.aiReports.set(sessionId, report);
+  }
+
+  getAIReport(sessionId: string): AIPerformanceReport | null {
+    return this.aiReports.get(sessionId) || null;
+  }
+
   // Debug: Print all sessions
   getAllSessions() {
     return Array.from(this.sessions.values());
@@ -230,6 +253,7 @@ class InMemoryStore {
     this.purchases.clear();
     this.wheelSpins.clear();
     this.suggestedQuestions.clear();
+    this.aiReports.clear();
   }
 }
 
